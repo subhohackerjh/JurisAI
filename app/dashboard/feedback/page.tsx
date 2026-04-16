@@ -215,6 +215,7 @@ export default function FeedbackPage() {
             </div>
           </form>
         </Card>
+        </div>
       </main>
     </div>
   );
