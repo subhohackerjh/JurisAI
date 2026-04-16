@@ -1,0 +1,138 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Shield, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await login(email, password);
+      router.push('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const demoAccounts = [
+    { email: 'rajesh@legalconnect.com', role: 'Advocate', password: 'password' },
+    { email: 'mohan@example.com', role: 'Citizen', password: 'password' },
+    { email: 'rajesh.patel@police.gov.in', role: 'Police Officer', password: 'password' },
+    { email: 'admin@legalconnect.com', role: 'Admin', password: 'password' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-md space-y-4 sm:space-y-6">
+        {/* Logo */}
+        <div className="text-center space-y-1.5 sm:space-y-2">
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+            <span className="text-xl sm:text-2xl font-bold text-foreground">LegalConnect</span>
+          </div>
+          <p className="text-xs sm:text-sm text-muted-foreground">Access the legal platform</p>
+        </div>
+
+        {/* Login Card */}
+        <Card className="border border-border bg-card">
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-lg sm:text-xl">Sign In</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Enter your credentials to access your account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+              {error && (
+                <div className="p-2.5 sm:p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex gap-2">
+                  <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                  <p className="text-xs sm:text-sm text-destructive">{error}</p>
+                </div>
+              )}
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium text-foreground">Email</label>
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  className="text-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <label className="text-xs sm:text-sm font-medium text-foreground">Password</label>
+                <Input
+                  type="password"
+                  placeholder="Password: password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  className="text-sm"
+                />
+              </div>
+
+              <Button type="submit" className="w-full text-sm sm:text-base" disabled={isLoading}>
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Demo Accounts */}
+        <Card className="border border-border bg-card">
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-sm sm:text-base">Demo Accounts</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Click to use these accounts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1.5 sm:space-y-2">
+              {demoAccounts.map((account) => (
+                <button
+                  key={account.email}
+                  onClick={() => {
+                    setEmail(account.email);
+                    setPassword(account.password);
+                  }}
+                  className="w-full p-2.5 sm:p-3 rounded-lg border border-border hover:bg-secondary/50 transition text-left text-xs sm:text-sm"
+                >
+                  <div className="font-medium text-foreground">{account.role}</div>
+                  <div className="text-xs text-muted-foreground truncate">{account.email}</div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center text-xs sm:text-sm text-muted-foreground">
+          <p>
+            <Link href="/" className="text-primary hover:underline font-medium">
+              ← Back to home
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
