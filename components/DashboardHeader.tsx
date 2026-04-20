@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, LogOut, Menu, X, Home, MessageSquare, Brain, PenTool, Shield, Gavel } from 'lucide-react';
+import { User, LogOut, Menu, X, Home, MessageSquare, Brain, PenTool, Shield, Gavel, Search, FileText, Briefcase, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
