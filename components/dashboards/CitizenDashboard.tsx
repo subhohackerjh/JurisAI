@@ -14,7 +14,7 @@ export default function CitizenDashboard() {
   const { session, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'cases' | 'advocates' | 'chat'>('cases');
 
-  if (!session.user || session.user.role !== 'citizen') {
+  if (!session.user || session.user.role !== 'customer') {
     return null;
   }
 

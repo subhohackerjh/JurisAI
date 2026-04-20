@@ -14,21 +14,8 @@ export const metadata: Metadata = {
   title: 'Legal24 - Legal Services Platform',
   description: 'Connect with expert advocates, manage cases, and access legal guidance 24/7',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/image.png',
+    apple: '/image.png',
   },
 }
 

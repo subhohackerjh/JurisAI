@@ -34,7 +34,7 @@ export default function DashboardPage() {
   }
 
   switch (session.user.role) {
-    case 'citizen':
+    case 'customer':
       return <CitizenDashboard />;
     case 'advocate':
       return <AdvocateDashboard />;
