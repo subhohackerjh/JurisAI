@@ -1,4 +1,4 @@
-import { Advocate, Case, Citizen, PoliceOfficer, PoliceStation, CaseNote, TimelineEvent, Feedback } from './types';
+import { Advocate, Case, Customer, PoliceOfficer, PoliceStation, CaseNote, TimelineEvent, Feedback, AvailableCase, InternshipApplication, NearbyAdvocate } from './types';
 
 export const mockAdvocates: Advocate[] = [
   {
@@ -88,12 +88,12 @@ export const mockAdvocates: Advocate[] = [
   },
 ];
 
-export const mockCitizens: Citizen[] = [
+export const mockCustomers: Customer[] = [
   {
-    id: 'cit-1',
+    id: 'cust-1',
     name: 'Mohan Singh',
     email: 'mohan@example.com',
-    role: 'citizen',
+    role: 'customer',
     phone: '+91-9876543220',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mohan',
     caseCount: 2,
@@ -101,10 +101,10 @@ export const mockCitizens: Citizen[] = [
     createdAt: '2023-06-10',
   },
   {
-    id: 'cit-2',
+    id: 'cust-2',
     name: 'Anjali Verma',
     email: 'anjali@example.com',
-    role: 'citizen',
+    role: 'customer',
     phone: '+91-9876543221',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=anjali',
     caseCount: 1,
@@ -316,7 +316,7 @@ export const mockFeedback: Feedback[] = [
     userId: 'cit-1',
     userName: 'Mohan Singh',
     userEmail: 'mohan@example.com',
-    userRole: 'citizen',
+    userRole: 'customer',
     rating: 5,
     category: 'improvement',
     subject: 'Great advocate matching feature!',
@@ -344,7 +344,7 @@ export const mockFeedback: Feedback[] = [
     userId: 'cit-2',
     userName: 'Anjali Verma',
     userEmail: 'anjali@example.com',
-    userRole: 'citizen',
+    userRole: 'customer',
     rating: 4,
     category: 'improvement',
     subject: 'Case timeline clarity',
@@ -354,20 +354,220 @@ export const mockFeedback: Feedback[] = [
   },
 ];
 
+// Available Cases for Advocates
+export const mockAvailableCases: AvailableCase[] = [
+  {
+    id: 'case-avail-1',
+    title: 'Property Boundary Dispute',
+    description: 'Client needs help with property boundary dispute with neighbor. Survey maps and documents available.',
+    category: 'property',
+    budget: 25000,
+    urgency: 'high',
+    location: 'Mumbai, Maharashtra',
+    customerId: 'cust-1',
+    customerName: 'Mohan Singh',
+    postedDate: '2024-04-20',
+    requirements: ['Property Law Expertise', 'Documentation Review', 'Court Representation'],
+    status: 'available'
+  },
+  {
+    id: 'case-avail-2',
+    title: 'Employment Termination Case',
+    description: 'Wrongful termination from corporate job. Need legal assistance for compensation claim.',
+    category: 'labor',
+    budget: 15000,
+    urgency: 'medium',
+    location: 'Delhi, NCR',
+    customerId: 'cust-2',
+    customerName: 'Anjali Verma',
+    postedDate: '2024-04-19',
+    requirements: ['Labor Law', 'Negotiation Skills', 'Documentation'],
+    status: 'available'
+  },
+  {
+    id: 'case-avail-3',
+    title: 'Divorce Proceedings',
+    description: 'Mutual consent divorce with child custody matters. Need peaceful resolution.',
+    category: 'family',
+    budget: 30000,
+    urgency: 'low',
+    location: 'Bangalore, Karnataka',
+    customerId: 'cust-3',
+    customerName: 'Rahul Sharma',
+    postedDate: '2024-04-18',
+    requirements: ['Family Law', 'Mediation', 'Child Custody'],
+    status: 'claimed',
+    claimedBy: 'adv-2',
+    claimedAt: '2024-04-20'
+  }
+];
+
+// Internship Applications
+export const mockInternshipApplications: InternshipApplication[] = [
+  {
+    id: 'intern-1',
+    advocateId: 'adv-1',
+    studentName: 'Priya Nair',
+    studentEmail: 'priya.nair@lawcollege.edu',
+    studentPhone: '+91-9876543299',
+    education: 'LLB 3rd Year',
+    university: 'National Law School',
+    year: '2025',
+    resume: '/resume/priya_nair.pdf',
+    coverLetter: 'Interested in criminal law internship to gain practical experience.',
+    appliedDate: '2024-04-15',
+    status: 'pending',
+    experience: '6 months legal aid clinic',
+    skills: ['Legal Research', 'Document Drafting', 'Client Interviewing']
+  },
+  {
+    id: 'intern-2',
+    advocateId: 'adv-1',
+    studentName: 'Amit Kumar',
+    studentEmail: 'amit.kumar@lawcollege.edu',
+    studentPhone: '+91-9876543300',
+    education: 'LLB 2nd Year',
+    university: 'Delhi Law College',
+    year: '2026',
+    resume: '/resume/amit_kumar.pdf',
+    coverLetter: 'Eager to learn constitutional law from experienced advocate.',
+    appliedDate: '2024-04-10',
+    status: 'reviewed',
+    experience: '3 months moot court',
+    skills: ['Legal Writing', 'Case Analysis', 'Public Speaking']
+  },
+  {
+    id: 'intern-3',
+    advocateId: 'adv-2',
+    studentName: 'Sneha Reddy',
+    studentEmail: 'sneha.reddy@lawcollege.edu',
+    studentPhone: '+91-9876543301',
+    education: 'LLM 1st Year',
+    university: 'Hyderabad Law University',
+    year: '2025',
+    resume: '/resume/sneha_reddy.pdf',
+    coverLetter: 'Specializing in family law, want to learn from expert.',
+    appliedDate: '2024-04-12',
+    status: 'accepted',
+    experience: '1 year family law firm',
+    skills: ['Family Law', 'Mediation', 'Counseling']
+  }
+];
+
+// Nearby Advocates for Customers
+export const mockNearbyAdvocates: NearbyAdvocate[] = [
+  {
+    id: 'adv-1',
+    name: 'Rajesh Kumar',
+    specializations: ['Criminal Law', 'Constitutional Law', 'Corporate Law'],
+    rating: 4.8,
+    experience: 15,
+    hourlyRate: 2500,
+    distance: 0.8,
+    isAvailable: true,
+    location: {
+      latitude: 19.0760,
+      longitude: 72.8777,
+      address: '123, Bandra West, Mumbai, Maharashtra 400050'
+    },
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=rajesh',
+    phone: '+91-9876543210',
+    email: 'rajesh@legalconnect.com'
+  },
+  {
+    id: 'adv-2',
+    name: 'Priya Sharma',
+    specializations: ['Family Law', 'Property Rights', 'Women Rights'],
+    rating: 4.9,
+    experience: 8,
+    hourlyRate: 2000,
+    distance: 1.2,
+    isAvailable: true,
+    location: {
+      latitude: 19.0822,
+      longitude: 72.8816,
+      address: '456, Andheri East, Mumbai, Maharashtra 400069'
+    },
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=priya',
+    phone: '+91-9876543211',
+    email: 'priya@legalconnect.com'
+  },
+  {
+    id: 'adv-3',
+    name: 'Amit Patel',
+    specializations: ['Labor Law', 'Employment Rights', 'Dispute Resolution'],
+    rating: 4.7,
+    experience: 12,
+    hourlyRate: 1800,
+    distance: 2.5,
+    isAvailable: true,
+    location: {
+      latitude: 19.1193,
+      longitude: 72.8557,
+      address: '789, Goregaon, Mumbai, Maharashtra 400063'
+    },
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=amit',
+    phone: '+91-9876543212',
+    email: 'amit@legalconnect.com'
+  },
+  {
+    id: 'adv-4',
+    name: 'Sneha Reddy',
+    specializations: ['Property Law', 'Real Estate', 'Civil Litigation'],
+    rating: 4.6,
+    experience: 6,
+    hourlyRate: 1500,
+    distance: 3.1,
+    isAvailable: false,
+    location: {
+      latitude: 19.1355,
+      longitude: 72.8424,
+      address: '234, Powai, Mumbai, Maharashtra 400076'
+    },
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sneha',
+    phone: '+91-9876543213',
+    email: 'sneha@legalconnect.com'
+  },
+  {
+    id: 'adv-5',
+    name: 'Vikram Singh',
+    specializations: ['Tax Law', 'Corporate Law', 'Business Compliance'],
+    rating: 4.8,
+    experience: 11,
+    hourlyRate: 2800,
+    distance: 4.2,
+    isAvailable: true,
+    location: {
+      latitude: 19.0992,
+      longitude: 72.8748,
+      address: '567, Worli, Mumbai, Maharashtra 400030'
+    },
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=vikram',
+    phone: '+91-9876543214',
+    email: 'vikram@legalconnect.com'
+  }
+];
+
 // Feedback Storage Manager
-let feedbackStorage: Feedback[] = [...mockFeedback];
+export class FeedbackStorage {
+  static addFeedback(feedback: Feedback) {
+    mockFeedback.push(feedback);
+  }
 
-export function getFeedback(): Feedback[] {
-  return feedbackStorage;
+  static getFeedbackByUserId(userId: string) {
+    return mockFeedback.filter(f => f.userId === userId);
+  }
+
+  static getAllFeedback() {
+    return mockFeedback;
+  }
 }
 
-export function addFeedback(feedback: Feedback): void {
-  feedbackStorage.push(feedback);
-  // In real app, this would save to database
-}
-
-export function updateFeedbackStatus(feedbackId: string, status: 'new' | 'reviewed' | 'resolved', response?: string): void {
-  const feedback = feedbackStorage.find(f => f.id === feedbackId);
+// Export functions for backward compatibility
+export const addFeedback = FeedbackStorage.addFeedback;
+export const getFeedback = FeedbackStorage.getAllFeedback;
+export const updateFeedbackStatus = (feedbackId: string, status: 'new' | 'reviewed' | 'resolved', response?: string) => {
+  const feedback = mockFeedback.find(f => f.id === feedbackId);
   if (feedback) {
     feedback.status = status;
     if (response) {
@@ -375,4 +575,4 @@ export function updateFeedbackStatus(feedbackId: string, status: 'new' | 'review
       feedback.respondedAt = new Date().toISOString();
     }
   }
-}
+};

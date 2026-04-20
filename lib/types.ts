@@ -1,5 +1,5 @@
 // User Types
-export type UserRole = 'citizen' | 'advocate' | 'police_officer' | 'admin';
+export type UserRole = 'customer' | 'advocate' | 'police_officer' | 'admin';
 
 export interface User {
   id: string;
@@ -23,8 +23,8 @@ export interface Advocate extends User {
   isAvailable: boolean;
 }
 
-export interface Citizen extends User {
-  role: 'citizen';
+export interface Customer extends User {
+  role: 'customer';
   caseCount: number;
   totalSpent: number;
 }
@@ -147,4 +147,76 @@ export interface Feedback {
   createdAt: string;
   response?: string;
   respondedAt?: string;
+}
+
+// Case Selection for Advocates
+export interface AvailableCase {
+  id: string;
+  title: string;
+  description: string;
+  category: CaseCategory;
+  budget: number;
+  urgency: 'low' | 'medium' | 'high';
+  location: string;
+  customerId: string;
+  customerName: string;
+  postedDate: string;
+  requirements: string[];
+  status: 'available' | 'claimed' | 'assigned';
+  claimedBy?: string;
+  claimedAt?: string;
+}
+
+// Internship Applications
+export interface InternshipApplication {
+  id: string;
+  advocateId: string;
+  studentName: string;
+  studentEmail: string;
+  studentPhone: string;
+  education: string;
+  university: string;
+  year: string;
+  resume: string;
+  coverLetter: string;
+  appliedDate: string;
+  status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
+  experience?: string;
+  skills?: string[];
+}
+
+// Location-based Search
+export interface LocationSearch {
+  latitude: number;
+  longitude: number;
+  radius: number; // in km
+}
+
+export interface NearbyAdvocate {
+  id: string;
+  name: string;
+  specializations: string[];
+  rating: number;
+  experience: number;
+  hourlyRate: number;
+  distance: number; // in km
+  isAvailable: boolean;
+  location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
+  avatar?: string;
+  phone?: string;
+  email: string;
+}
+
+// AI Chat
+export interface AIChatMessage {
+  id: string;
+  sender: 'user' | 'ai';
+  content: string;
+  timestamp: string;
+  category?: 'legal_advice' | 'procedure' | 'document_help' | 'general';
+  suggestedActions?: string[];
 }

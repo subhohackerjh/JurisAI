@@ -1,16 +1,18 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Poppins } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/context/AuthContext'
 import './globals.css'
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-poppins",
+});
 
 export const metadata: Metadata = {
-  title: 'LegalConnect - Legal Services Platform',
-  description: 'Connect with advocates, manage cases, and access legal guidance',
-  generator: 'v0.app',
+  title: 'Legal24 - Legal Services Platform',
+  description: 'Connect with expert advocates, manage cases, and access legal guidance 24/7',
   icons: {
     icon: [
       {
@@ -37,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background">
-      <body className="font-sans antialiased">
+      <body className={`${poppins.variable} font-sans antialiased`}>
         <AuthProvider>
           {children}
         </AuthProvider>

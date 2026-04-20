@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, LogOut, Menu, X, Home, MessageSquare } from 'lucide-react';
+import { User, LogOut, Menu, X, Home, MessageSquare, Brain, PenTool, Shield, Gavel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User as UserType } from '@/lib/types';
+import Legal24Logo from './Legal24Logo';
 
 interface DashboardHeaderProps {
   user: UserType;
@@ -30,10 +31,17 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
-    ...(user.role === 'citizen'
+    ...(user.role === 'customer'
       ? [
-          { href: '/dashboard/chat', label: 'Legal AI', icon: MessageSquare },
-          { href: '/dashboard/advocates', label: 'Advocates', icon: User },
+          { href: '/dashboard/customer', label: 'Find Advocates', icon: Search },
+          { href: '/dashboard/customer/ai-chat', label: 'AI Assistant', icon: MessageSquare },
+          { href: '/dashboard/file-case', label: 'File Case', icon: FileText },
+        ]
+      : user.role === 'advocate'
+      ? [
+          { href: '/dashboard/advocate', label: 'Available Cases', icon: Briefcase },
+          { href: '/dashboard/advocate/cases', label: 'My Cases', icon: FileText },
+          { href: '/dashboard/advocate/internships', label: 'Internships', icon: Users },
         ]
       : []),
     { href: '/dashboard/feedback', label: 'Feedback', icon: MessageSquare },
@@ -43,10 +51,7 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
     <header className="border-b border-border bg-card sticky top-0 z-50">
       <div className="px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0">
-          <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-            L
-          </div>
-          <span className="font-bold text-foreground hidden sm:inline">LegalConnect</span>
+          <Legal24Logo />
         </Link>
 
         {/* Desktop Navigation */}
@@ -57,19 +62,47 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
           >
             Dashboard
           </Link>
-          {user.role === 'citizen' && (
+          {user.role === 'customer' && (
             <>
               <Link
-                href="/dashboard/chat"
+                href="/dashboard/customer"
                 className="text-sm text-muted-foreground hover:text-foreground transition"
               >
-                Legal AI
+                Find Advocates
               </Link>
               <Link
-                href="/dashboard/advocates"
+                href="/dashboard/customer/ai-chat"
                 className="text-sm text-muted-foreground hover:text-foreground transition"
               >
-                Advocates
+                AI Assistant
+              </Link>
+              <Link
+                href="/dashboard/file-case"
+                className="text-sm text-muted-foreground hover:text-foreground transition"
+              >
+                File Case
+              </Link>
+            </>
+          )}
+          {user.role === 'advocate' && (
+            <>
+              <Link
+                href="/dashboard/advocate"
+                className="text-sm text-muted-foreground hover:text-foreground transition"
+              >
+                Available Cases
+              </Link>
+              <Link
+                href="/dashboard/advocate/cases"
+                className="text-sm text-muted-foreground hover:text-foreground transition"
+              >
+                My Cases
+              </Link>
+              <Link
+                href="/dashboard/advocate/internships"
+                className="text-sm text-muted-foreground hover:text-foreground transition"
+              >
+                Internships
               </Link>
             </>
           )}

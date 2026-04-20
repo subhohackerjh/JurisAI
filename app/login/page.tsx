@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Shield, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import Legal24Logo from '@/components/Legal24Logo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -34,7 +35,7 @@ export default function LoginPage() {
 
   const demoAccounts = [
     { email: 'rajesh@legalconnect.com', role: 'Advocate', password: 'password' },
-    { email: 'mohan@example.com', role: 'Citizen', password: 'password' },
+    { email: 'mohan@example.com', role: 'Customer', password: 'password' },
     { email: 'rajesh.patel@police.gov.in', role: 'Police Officer', password: 'password' },
     { email: 'admin@legalconnect.com', role: 'Admin', password: 'password' },
   ];
@@ -43,12 +44,12 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-md space-y-4 sm:space-y-6">
         {/* Logo */}
-        <div className="text-center space-y-1.5 sm:space-y-2">
-          <div className="flex items-center justify-center gap-1.5 sm:gap-2">
-            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-            <span className="text-xl sm:text-2xl font-bold text-foreground">LegalConnect</span>
+        <div className="flex items-center gap-3 mb-6">
+          <Legal24Logo />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">LEGAL 24</h1>
+            <p className="text-sm text-muted-foreground">Your trusted legal services platform</p>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground">Access the legal platform</p>
         </div>
 
         {/* Login Card */}

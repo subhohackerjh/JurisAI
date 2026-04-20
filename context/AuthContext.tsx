@@ -4,12 +4,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, AuthSession } from '@/lib/types';
 import {
   mockAdvocates,
-  mockCitizens,
+  mockCustomers,
   mockPoliceOfficers,
 } from '@/lib/mock-data';
 
 interface AuthContextType {
   session: AuthSession;
+  user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const allUsers = [
       ...mockAdvocates,
-      ...mockCitizens,
+      ...mockCustomers,
       ...mockPoliceOfficers,
       {
         id: 'admin-1',
@@ -78,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ session, user: session.user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
