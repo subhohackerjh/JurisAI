@@ -233,21 +233,21 @@ export default function LandingPage() {
             </div>
 
             {/* For Students */}
-            <div className="group relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 hover:border-amber-500/50 rounded-3xl p-6 md:p-10 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/20 overflow-hidden">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-amber-500/20 transition-all" />
-              <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg">
-                <GraduationCap className="h-7 w-7 text-slate-900" />
+            <div className="group relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 hover:border-blue-500/50 rounded-3xl p-6 md:p-10 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-blue-500/20 transition-all" />
+              <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg">
+                <GraduationCap className="h-7 w-7 text-white" />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-white">For Law Students</h3>
               <p className="text-slate-400 leading-relaxed mb-6">
                 Jumpstart your legal career. Search for renowned or local advocates, upload your CV, and secure verified internships directly through our portal.
               </p>
               <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-amber-400" /> Discover Renowned Law Firms</li>
-                <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-amber-400" /> One-Click CV Submissions</li>
-                <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-amber-400" /> Direct Advocate Networking</li>
+                <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-emerald-400" /> Discover Renowned Law Firms</li>
+                <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-emerald-400" /> One-Click CV Submissions</li>
+                <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-emerald-400" /> Direct Advocate Networking</li>
               </ul>
-              <Button variant="outline" className="w-full border-slate-600 bg-slate-800/50 hover:bg-amber-500 hover:border-amber-500 hover:text-slate-900 transition-all text-white font-semibold rounded-full">
+              <Button variant="outline" className="w-full border-slate-600 bg-slate-800/50 hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-all text-white font-semibold rounded-full">
                 Explore Internships
               </Button>
             </div>
