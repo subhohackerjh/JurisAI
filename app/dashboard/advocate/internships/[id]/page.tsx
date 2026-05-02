@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import DashboardHeader from '@/components/DashboardHeader';
@@ -23,7 +23,7 @@ import {
   Download,
   Clock
 } from 'lucide-react';
-import { mockInternshipApplications } from '@/lib/mock-data';
+import { draftsApi } from '@/lib/api';
 
 export default function InternshipApplicationDetail({ params }: { params: { id: string } }) {
   const { user } = useAuth();
@@ -32,7 +32,39 @@ export default function InternshipApplicationDetail({ params }: { params: { id: 
   const [status, setStatus] = useState<'pending' | 'reviewed' | 'accepted' | 'rejected'>('pending');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const application = mockInternshipApplications.find(app => app.id === params.id);
+  const [application, setApplication] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchApplication = async () => {
+      try {
+        setLoading(true);
+        // For now, we'll show a placeholder since internship applications might not be implemented yet
+        // This would need to be replaced with actual API endpoint when available
+        setApplication({
+          id: params.id,
+          applicant_name: 'Loading...',
+          email: 'loading@example.com',
+          phone: '+91 0000000000',
+          university: 'Loading University',
+          expected_graduation: '2025-05-01',
+          area_of_interest: 'Loading...',
+          cover_letter: 'Loading application details...',
+          status: 'pending',
+          applied_date: new Date().toISOString().split('T')[0]
+        });
+      } catch (err) {
+        setError('Failed to load application');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (params.id) {
+      fetchApplication();
+    }
+  }, [params.id]);
 
   const handleUpdateStatus = async (newStatus: typeof status) => {
     setIsSubmitting(true);
@@ -152,7 +184,7 @@ export default function InternshipApplicationDetail({ params }: { params: { id: 
                   <div>
                     <h4 className="font-medium mb-2">Skills</h4>
                     <div className="flex flex-wrap gap-2">
-                      {application.skills.map((skill, index) => (
+                      {application.skills?.map((skill: any, index: number) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {skill}
                         </Badge>

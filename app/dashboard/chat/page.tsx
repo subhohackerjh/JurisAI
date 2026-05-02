@@ -11,8 +11,7 @@ import DashboardHeader from '@/components/DashboardHeader';
 import { ChatMessage } from '@/lib/types';
 import { searchLegalKnowledgeBase } from '@/lib/legal-kb';
 
-export default function ChatPage() {
-  const { session, logout } = useAuth();
+function ChatPageContent({ session, logout }: { session: any; logout: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -25,10 +24,6 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  if (!session.user) {
-    return null;
-  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -188,4 +183,14 @@ export default function ChatPage() {
       </main>
     </div>
   );
+}
+
+export default function ChatPage() {
+  const { session, logout } = useAuth();
+
+  if (!session.user) {
+    return null;
+  }
+
+  return <ChatPageContent session={session} logout={logout} />;
 }

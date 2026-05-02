@@ -3,20 +3,90 @@
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Users, Star, TrendingUp, Clock } from 'lucide-react';
-import { mockCases, mockAdvocates } from '@/lib/mock-data';
+import { FileText, Users, Star, TrendingUp, Clock, RefreshCw } from 'lucide-react';
+import { casesApi, profileApi } from '@/lib/api';
 import DashboardHeader from '@/components/DashboardHeader';
+import { useState, useEffect } from 'react';
 
 export default function AdvocateDashboard() {
   const { session, logout } = useAuth();
+  const [cases, setCases] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   if (!session.user || session.user.role !== 'advocate') {
     return null;
   }
 
-  const advocate = mockAdvocates.find((a) => a.id === session.user?.id);
-  const assignedCases = mockCases.filter((c) => c.advocateId === session.user?.id);
+  // Load data on component mount
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch profile and cases in parallel
+      const [profileRes, casesRes] = await Promise.all([
+        profileApi.getProfile(),
+        casesApi.listCases(),
+      ]);
+
+      if (profileRes.data && !profileRes.error) {
+        setProfile(profileRes.data);
+      }
+
+      if (casesRes.data && !casesRes.error) {
+        const allCases = Array.isArray(casesRes.data) ? casesRes.data : [];
+        // Filter cases assigned to this advocate
+        const myCases = allCases.filter(case_ => case_.advocate === session.user?.id);
+        setCases(myCases);
+      }
+    } catch (err) {
+      setError('Failed to load dashboard data');
+      console.error('Dashboard data loading error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={session.user} onLogout={logout} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading dashboard...</span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={session.user} onLogout={logout} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <p className="text-red-800">Error: {error}</p>
+              <Button onClick={loadDashboardData} className="mt-4">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -25,17 +95,17 @@ export default function AdvocateDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Welcome, {advocate?.name}</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Welcome, {profile?.name || 'Advocate'}</h1>
           <p className="text-muted-foreground">Manage your cases and client interactions</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           {[
-            { label: 'Active Cases', value: assignedCases.length, icon: FileText },
-            { label: 'Experience', value: `${advocate?.experience}y`, icon: TrendingUp },
-            { label: 'Rating', value: `${advocate?.rating}⭐`, icon: Star },
-            { label: 'Hourly Rate', value: `₹${advocate?.hourlyRate}`, icon: Clock },
+            { label: 'Active Cases', value: cases.length, icon: FileText },
+            { label: 'Experience', value: `${profile?.experience_years || 0}y`, icon: TrendingUp },
+            { label: 'Specialization', value: profile?.specialization || 'N/A', icon: Star },
+            { label: 'Status', value: profile?.approval_status || 'Unknown', icon: Clock },
           ].map((stat, idx) => (
             <Card key={idx} className="border border-border bg-card">
               <CardContent className="pt-6">
@@ -58,7 +128,7 @@ export default function AdvocateDashboard() {
             <p className="text-sm text-muted-foreground">Active cases assigned to you</p>
           </div>
 
-          {assignedCases.length === 0 ? (
+          {cases.length === 0 ? (
             <Card className="border border-border bg-card">
               <CardContent className="pt-6 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
@@ -67,41 +137,43 @@ export default function AdvocateDashboard() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {assignedCases.map((caseData) => (
+              {cases.map((caseData) => (
                 <Link key={caseData.id} href={`/dashboard/case/${caseData.id}`}>
                   <Card className="border border-border bg-card hover:shadow-lg transition cursor-pointer">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
                           <CardTitle className="text-lg">{caseData.title}</CardTitle>
-                          <CardDescription>Case #{caseData.caseNumber}</CardDescription>
+                          <CardDescription>Case #{caseData.id}</CardDescription>
                         </div>
                         <Badge
                           className={
                             caseData.status === 'closed'
                               ? 'bg-green-100 text-green-800'
+                              : caseData.status === 'in_progress'
+                              ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-blue-100 text-blue-800'
                           }
                         >
-                          {caseData.status}
+                          {caseData.status?.replace('_', ' ') || 'Unknown'}
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <div className="grid sm:grid-cols-3 gap-4 text-sm">
                         <div>
-                          <p className="text-muted-foreground">Category</p>
-                          <p className="font-medium text-foreground">{caseData.category}</p>
+                          <p className="text-muted-foreground">Case Type</p>
+                          <p className="font-medium text-foreground">{caseData.case_type || 'N/A'}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Client</p>
-                          <p className="font-medium text-foreground">
-                            {mockCases.find((c) => c.id === caseData.id)?.citizenId}
-                          </p>
+                          <p className="font-medium text-foreground">{caseData.customer?.name || 'N/A'}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Documents</p>
-                          <p className="font-medium text-foreground">{caseData.documents.length}</p>
+                          <p className="text-muted-foreground">Filing Date</p>
+                          <p className="font-medium text-foreground">
+                            {caseData.filing_date ? new Date(caseData.filing_date).toLocaleDateString() : 'N/A'}
+                          </p>
                         </div>
                       </div>
                     </CardContent>
@@ -121,34 +193,42 @@ export default function AdvocateDashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Bio</p>
-                <p className="text-foreground">{advocate?.bio}</p>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="text-foreground">{profile?.email || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-2">Specializations</p>
+                <p className="text-sm text-muted-foreground">Phone</p>
+                <p className="text-foreground">{profile?.phone || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Bio</p>
+                <p className="text-foreground">{profile?.bio || 'No bio provided'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Specialization</p>
                 <div className="flex flex-wrap gap-2">
-                  {advocate?.specializations.map((spec) => (
-                    <Badge key={spec} variant="secondary">
-                      {spec}
-                    </Badge>
-                  ))}
+                  <Badge variant="secondary">
+                    {profile?.specialization || 'General Practice'}
+                  </Badge>
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-border">
                 <div>
-                  <p className="text-sm text-muted-foreground">License Number</p>
-                  <p className="font-medium text-foreground">{advocate?.licenseNumber}</p>
+                  <p className="text-sm text-muted-foreground">Bar Council ID</p>
+                  <p className="font-medium text-foreground">{profile?.bar_council_id || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
+                  <p className="text-sm text-muted-foreground">Approval Status</p>
                   <Badge
                     className={
-                      advocate?.isAvailable
+                      profile?.approval_status === 'approved'
                         ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
+                        : profile?.approval_status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
                     }
                   >
-                    {advocate?.isAvailable ? 'Available' : 'Unavailable'}
+                    {profile?.approval_status || 'Unknown'}
                   </Badge>
                 </div>
               </div>

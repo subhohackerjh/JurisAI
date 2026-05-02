@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { 
@@ -19,9 +19,10 @@ import {
   User,
   Clock,
   DollarSign,
-  Navigation
+  Navigation,
+  RefreshCw
 } from 'lucide-react';
-import { mockNearbyAdvocates } from '@/lib/mock-data';
+import { advocatesApi } from '@/lib/api';
 
 export default function CustomerDashboard() {
   const { user } = useAuth();
@@ -30,27 +31,50 @@ export default function CustomerDashboard() {
   const [selectedSpecialization, setSelectedSpecialization] = useState('all');
   const [maxDistance, setMaxDistance] = useState('10');
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'experience'>('distance');
+  const [advocates, setAdvocates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const specializations = ['all', 'Criminal Law', 'Family Law', 'Property Law', 'Labor Law', 'Corporate Law', 'Tax Law'];
   
-  const filteredAdvocates = mockNearbyAdvocates.filter(advocate => {
+  // Load advocates on component mount
+  useEffect(() => {
+    loadAdvocates();
+  }, []);
+
+  const loadAdvocates = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await advocatesApi.listAdvocates();
+      if (response.data && !response.error) {
+        const allAdvocates = Array.isArray(response.data) ? response.data : [];
+        // Filter only approved advocates
+        const approvedAdvocates = allAdvocates.filter((a) => a.approval_status === 'approved');
+        setAdvocates(approvedAdvocates);
+      }
+    } catch (err) {
+      setError('Failed to load advocates');
+      console.error('Advocates loading error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredAdvocates = advocates.filter(advocate => {
     const matchesSearch = advocate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         advocate.specializations.some(spec => 
-                           spec.toLowerCase().includes(searchTerm.toLowerCase())
-                         );
+                         (advocate.specialization && advocate.specialization.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesSpecialization = selectedSpecialization === 'all' || 
-                               advocate.specializations.includes(selectedSpecialization);
-    const matchesDistance = advocate.distance <= parseFloat(maxDistance);
+                               (advocate.specialization === selectedSpecialization);
     
-    return matchesSearch && matchesSpecialization && matchesDistance;
+    return matchesSearch && matchesSpecialization;
   }).sort((a, b) => {
     switch (sortBy) {
-      case 'distance':
-        return a.distance - b.distance;
       case 'rating':
-        return b.rating - a.rating;
+        return (b.rating || 0) - (a.rating || 0);
       case 'experience':
-        return b.experience - a.experience;
+        return (b.experience_years || 0) - (a.experience_years || 0);
       default:
         return 0;
     }
@@ -69,6 +93,39 @@ export default function CustomerDashboard() {
   };
 
   if (!user) return null;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={user} onLogout={() => {}} />
+        <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading advocates...</span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={user} onLogout={() => {}} />
+        <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <p className="text-red-800">Error: {error}</p>
+              <Button onClick={loadAdvocates} className="mt-4">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,7 +180,7 @@ export default function CustomerDashboard() {
 
         {/* Search and Filters */}
         <Card className="p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Find Nearby Advocates</h2>
+          <h2 className="text-lg font-semibold mb-4">Find Advocates</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium mb-2">Search Advocates</label>
@@ -154,27 +211,12 @@ export default function CustomerDashboard() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Max Distance (km)</label>
-              <select
-                value={maxDistance}
-                onChange={(e) => setMaxDistance(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-background"
-              >
-                <option value="5">5 km</option>
-                <option value="10">10 km</option>
-                <option value="25">25 km</option>
-                <option value="50">50 km</option>
-              </select>
-            </div>
-            
-            <div>
               <label className="block text-sm font-medium mb-2">Sort By</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-background"
               >
-                <option value="distance">Distance</option>
                 <option value="rating">Rating</option>
                 <option value="experience">Experience</option>
               </select>
@@ -189,7 +231,7 @@ export default function CustomerDashboard() {
           </h3>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="w-4 h-4" />
-            <span>Within {maxDistance} km</span>
+            <span>Available for consultation</span>
           </div>
         </div>
 
@@ -207,60 +249,54 @@ export default function CustomerDashboard() {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                        <span className="font-medium">{advocate.rating}</span>
+                        <span className="font-medium">{advocate.rating || 'N/A'}</span>
                       </div>
-                      <span>•</span>
-                      <span>{advocate.experience} years exp.</span>
+                      <span>â¢</span>
+                      <span>{advocate.experience_years || 0} years exp.</span>
                     </div>
                   </div>
                 </div>
                 <Badge className={
-                  advocate.isAvailable 
+                  advocate.approval_status === 'approved'
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-red-100 text-red-800'
                 }>
-                  {advocate.isAvailable ? 'Available' : 'Busy'}
+                  {advocate.approval_status === 'approved' ? 'Available' : 'Unavailable'}
                 </Badge>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Navigation className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-medium">Distance:</span>
-                  <span>{advocate.distance} km</span>
+                  <span className="font-medium">Specialization:</span>
+                  <span>{advocate.specialization || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Rate:</span>
-                  <span>₹{advocate.hourlyRate}/hr</span>
+                  <span>{advocate.consultation_fee ? `Rs. ${advocate.consultation_fee}/hr` : 'Contact for rates'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Location:</span>
-                  <span>{advocate.location.address}</span>
+                  <span>{advocate.city || 'N/A'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Phone:</span>
-                  <span>{advocate.phone}</span>
+                  <span>{advocate.phone || 'N/A'}</span>
                 </div>
               </div>
 
               <div className="mb-4">
-                <p className="text-sm font-medium mb-2">Specializations:</p>
-                <div className="flex flex-wrap gap-2">
-                  {advocate.specializations.map((spec, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {spec}
-                    </Badge>
-                  ))}
-                </div>
+                <p className="text-sm font-medium mb-2">Bio:</p>
+                <p className="text-sm text-muted-foreground">{advocate.bio || 'No bio available'}</p>
               </div>
 
               <div className="flex gap-2">
                 <Button
                   onClick={() => handleConnectAdvocate(advocate.id)}
-                  disabled={!advocate.isAvailable}
+                  disabled={advocate.approval_status !== 'approved'}
                   className="flex-1"
                 >
                   Connect
@@ -285,12 +321,11 @@ export default function CustomerDashboard() {
             </div>
             <h3 className="text-lg font-semibold mb-2">No Advocates Found</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Try adjusting your search criteria or increasing the search radius.
+              Try adjusting your search criteria.
             </p>
             <Button onClick={() => {
               setSearchTerm('');
               setSelectedSpecialization('all');
-              setMaxDistance('10');
             }}>
               Clear Filters
             </Button>

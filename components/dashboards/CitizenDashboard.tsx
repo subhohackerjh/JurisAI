@@ -1,24 +1,77 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, MessageSquare, Users, LogOut, Plus, Clock } from 'lucide-react';
-import { mockCases, mockAdvocates } from '@/lib/mock-data';
+import { FileText, MessageSquare, Users, Plus, Clock, RefreshCw, Send } from 'lucide-react';
+import { casesApi, advocatesApi } from '@/lib/api';
+import { messagingApi } from '@/lib/messaging-api';
 import DashboardHeader from '@/components/DashboardHeader';
 
 export default function CitizenDashboard() {
   const { session, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'cases' | 'advocates' | 'chat'>('cases');
+  const [cases, setCases] = useState<any[]>([]);
+  const [advocates, setAdvocates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [messageLoading, setMessageLoading] = useState<string | null>(null);
 
   if (!session.user || session.user.role !== 'customer') {
     return null;
   }
 
-  const userCases = mockCases.filter((c) => c.citizenId === session.user?.id);
+  // Load data on component mount
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch cases and advocates in parallel
+      const [casesRes, advocatesRes] = await Promise.all([
+        casesApi.listCases(),
+        advocatesApi.listAdvocates(),
+      ]);
+
+      if (casesRes.data && !casesRes.error) {
+        // Handle paginated response
+        let allCases: any[] = [];
+        if (Array.isArray(casesRes.data)) {
+          allCases = casesRes.data;
+        } else if (casesRes.data && typeof casesRes.data === 'object' && 'results' in casesRes.data) {
+          allCases = (casesRes.data as any).results || [];
+        }
+        // Filter cases for this customer
+        const userCases = allCases.filter((c) => c.customer === session.user?.id);
+        setCases(userCases);
+      }
+
+      if (advocatesRes.data && !advocatesRes.error) {
+        // Handle paginated response
+        let allAdvocates: any[] = [];
+        if (Array.isArray(advocatesRes.data)) {
+          allAdvocates = advocatesRes.data;
+        } else if (advocatesRes.data && typeof advocatesRes.data === 'object' && 'results' in advocatesRes.data) {
+          allAdvocates = (advocatesRes.data as any).results || [];
+        }
+        // Filter only approved advocates
+        const approvedAdvocates = allAdvocates.filter((a) => a.approval_status === 'approved');
+        setAdvocates(approvedAdvocates);
+      }
+    } catch (err) {
+      setError('Failed to load dashboard data');
+      console.error('Dashboard data loading error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -32,6 +85,39 @@ export default function CitizenDashboard() {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={session.user} onLogout={logout} />
+        <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading dashboard...</span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={session.user} onLogout={logout} />
+        <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <p className="text-red-800">Error: {error}</p>
+              <Button onClick={loadDashboardData} className="mt-4">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +170,7 @@ export default function CitizenDashboard() {
               </Link>
             </div>
 
-            {userCases.length === 0 ? (
+            {cases.length === 0 ? (
               <Card className="border border-border bg-card">
                 <CardContent className="pt-6 text-center">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
@@ -96,38 +182,38 @@ export default function CitizenDashboard() {
               </Card>
             ) : (
               <div className="grid gap-4">
-                {userCases.map((caseData) => (
+                {cases.map((caseData) => (
                   <Link key={caseData.id} href={`/dashboard/case/${caseData.id}`}>
                     <Card className="border border-border bg-card hover:shadow-lg transition cursor-pointer">
                       <CardHeader>
                         <div className="flex justify-between items-start">
                           <div>
                             <CardTitle className="text-lg">{caseData.title}</CardTitle>
-                            <CardDescription>Case #{caseData.caseNumber}</CardDescription>
+                            <CardDescription>Case #{caseData.id}</CardDescription>
                           </div>
                           <Badge className={getStatusColor(caseData.status)}>
-                            {caseData.status.replace('_', ' ')}
+                            {caseData.status?.replace('_', ' ') || 'Unknown'}
                           </Badge>
                         </div>
                       </CardHeader>
                       <CardContent>
                         <div className="grid sm:grid-cols-3 gap-4 text-sm">
                           <div>
-                            <p className="text-muted-foreground">Category</p>
-                            <p className="font-medium text-foreground">{caseData.category}</p>
+                            <p className="text-muted-foreground">Case Type</p>
+                            <p className="font-medium text-foreground">{caseData.case_type || 'N/A'}</p>
                           </div>
                           <div>
                             <p className="text-muted-foreground">Advocate</p>
                             <p className="font-medium text-foreground">
-                              {caseData.advocateId
-                                ? mockAdvocates.find((a) => a.id === caseData.advocateId)?.name
+                              {caseData.advocate
+                                ? advocates.find((a) => a.id === caseData.advocate)?.name || 'Assigned'
                                 : 'Not assigned'}
                             </p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">Budget Used</p>
+                            <p className="text-muted-foreground">Filing Date</p>
                             <p className="font-medium text-foreground">
-                              ₹{caseData.spent} / ₹{caseData.budget}
+                              {caseData.filing_date ? new Date(caseData.filing_date).toLocaleDateString() : 'N/A'}
                             </p>
                           </div>
                         </div>
@@ -148,58 +234,84 @@ export default function CitizenDashboard() {
               <p className="text-sm text-muted-foreground">Browse and connect with qualified advocates</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              {mockAdvocates.map((advocate) => (
-                <Link
-                  key={advocate.id}
-                  href={`/dashboard/advocates/${advocate.id}`}
-                >
-                  <Card className="border border-border bg-card hover:shadow-lg transition cursor-pointer h-full">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg">{advocate.name}</CardTitle>
-                          <CardDescription>{advocate.licenseNumber}</CardDescription>
-                        </div>
-                        {advocate.isAvailable && (
+            {advocates.length === 0 ? (
+              <Card className="border border-border bg-card">
+                <CardContent className="pt-6 text-center">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <p className="text-muted-foreground mb-4">No advocates available</p>
+                  <p className="text-sm text-muted-foreground">Check back later for available advocates</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {advocates.map((advocate) => (
+                  <Link
+                    key={advocate.id}
+                    href={`/dashboard/advocates/${advocate.id}`}
+                  >
+                    <Card className="border border-border bg-card hover:shadow-lg transition cursor-pointer h-full">
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-lg">{advocate.name}</CardTitle>
+                            <CardDescription>{advocate.email}</CardDescription>
+                          </div>
                           <Badge className="bg-green-100 text-green-800">Available</Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">{advocate.bio}</p>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Experience</p>
-                          <p className="font-medium text-foreground">{advocate.experience} years</p>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground">{advocate.bio || `Experienced ${advocate.specialization || 'Legal'} professional with ${advocate.experience_years || 0} years of practice.`}</p>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">Experience</p>
+                            <p className="font-medium text-foreground">{advocate.experience_years || 0} years</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Phone</p>
+                            <p className="font-medium text-foreground">{advocate.phone || 'N/A'}</p>
+                          </div>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Rating</p>
-                          <p className="font-medium text-foreground">
-                            ⭐ {advocate.rating} ({advocate.reviewCount})
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-sm mb-2">Specializations</p>
-                        <div className="flex flex-wrap gap-2">
-                          {advocate.specializations.map((spec) => (
-                            <Badge key={spec} variant="secondary" className="text-xs">
-                              {spec}
+                          <p className="text-muted-foreground text-sm mb-2">Specialization</p>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {advocate.specialization || 'General Practice'}
                             </Badge>
-                          ))}
+                          </div>
                         </div>
-                      </div>
-                      <div className="border-t border-border pt-4">
-                        <p className="font-semibold text-foreground">
-                          ₹{advocate.hourlyRate}/hour
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+                        <div className="border-t border-border pt-4">
+                          <Button 
+                            className="w-full" 
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
+                              try {
+                                setMessageLoading(advocate.id);
+                                const response = await messagingApi.startConversation(advocate.id);
+                                if (response.data && (response.data as any).id) {
+                                  // Redirect to conversation or open messaging modal
+                                  window.location.href = `/dashboard/chat?conversation=${(response.data as any).id}`;
+                                }
+                              } catch (error) {
+                                console.error('Failed to start conversation:', error);
+                                alert('Failed to start conversation. Please try again.');
+                              } finally {
+                                setMessageLoading(null);
+                              }
+                            }}
+                            disabled={messageLoading === advocate.id}
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Send Message
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -213,7 +325,7 @@ export default function CitizenDashboard() {
               </p>
             </div>
 
-            <Link href="/dashboard/chat">
+            <Link href="/dashboard/customer/ai-chat">
               <Card className="border border-border bg-card hover:shadow-lg transition cursor-pointer">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">

@@ -13,8 +13,18 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log('[Dashboard] Session state:', {
+      isLoading,
+      isAuthenticated: session.isAuthenticated,
+      user: session.user?.email,
+      role: session.user?.role
+    });
+    
     if (!isLoading && !session.isAuthenticated) {
+      console.log('[Dashboard] Session not authenticated, redirecting to login');
       router.push('/login');
+    } else if (!isLoading && session.isAuthenticated) {
+      console.log('[Dashboard] Session authenticated, staying on dashboard');
     }
   }, [session.isAuthenticated, isLoading, router]);
 

@@ -4,39 +4,184 @@ import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, FileText, Building2, TrendingUp, MessageSquare } from 'lucide-react';
-import { mockCases, mockAdvocates, mockPoliceStations, mockCitizens, getFeedback, updateFeedbackStatus } from '@/lib/mock-data';
+import { Users, FileText, Building2, MessageSquare, RefreshCw } from 'lucide-react';
+import { advocatesApi, casesApi, feedbackApi, profileApi } from '@/lib/api';
 import DashboardHeader from '@/components/DashboardHeader';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function AdminDashboard() {
   const { session, logout } = useAuth();
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [feedbackResponse, setFeedbackResponse] = useState<Record<string, string>>({});
+  
+  // Data states
+  const [advocates, setAdvocates] = useState<any[]>([]);
+  const [cases, setCases] = useState<any[]>([]);
+  const [feedback, setFeedback] = useState<any[]>([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   if (!session.user || session.user.role !== 'admin') {
     return null;
   }
 
-  const allFeedback = getFeedback();
-  const newFeedbackCount = allFeedback.filter(f => f.status === 'new').length;
+  // Load data on component mount
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
 
-  const stats = [
-    { label: 'Total Advocates', value: mockAdvocates.length, icon: Users },
-    { label: 'Total Cases', value: mockCases.length, icon: FileText },
-    { label: 'Police Stations', value: mockPoliceStations.length, icon: Building2 },
-    { label: 'Pending Feedback', value: newFeedbackCount, icon: MessageSquare },
-  ];
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  const handleResolveFeedback = (feedbackId: string) => {
-    const response = feedbackResponse[feedbackId] || 'Thank you for your feedback!';
-    updateFeedbackStatus(feedbackId, 'resolved', response);
-    setFeedbackResponse((prev) => {
-      const updated = { ...prev };
-      delete updated[feedbackId];
-      return updated;
-    });
+      // Check if user is authenticated
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setError('Authentication required. Please log in again.');
+        return;
+      }
+
+      // Fetch all data in parallel
+      const [advocatesRes, pendingAdvocatesRes, casesRes, feedbackRes] = await Promise.all([
+        advocatesApi.listAdvocates(),
+        advocatesApi.listPendingAdvocates(),
+        casesApi.listCases(),
+        feedbackApi.listFeedback(),
+      ]);
+
+      // Combine approved and pending advocates
+      let allAdvocates: any[] = [];
+      
+      if (advocatesRes.data && !advocatesRes.error) {
+        // Handle approved advocates (paginated response)
+        let approvedAdvocates: any[] = [];
+        if (Array.isArray(advocatesRes.data)) {
+          approvedAdvocates = advocatesRes.data;
+        } else if (advocatesRes.data && typeof advocatesRes.data === 'object' && 'results' in advocatesRes.data) {
+          approvedAdvocates = (advocatesRes.data as any).results || [];
+        }
+        allAdvocates = [...allAdvocates, ...approvedAdvocates];
+      }
+      
+      if (pendingAdvocatesRes.data && !pendingAdvocatesRes.error) {
+        // Handle pending advocates (direct array response)
+        let pendingAdvocates: any[] = [];
+        if (Array.isArray(pendingAdvocatesRes.data)) {
+          pendingAdvocates = pendingAdvocatesRes.data;
+        } else if (pendingAdvocatesRes.data && typeof pendingAdvocatesRes.data === 'object' && 'results' in pendingAdvocatesRes.data) {
+          pendingAdvocates = (pendingAdvocatesRes.data as any).results || [];
+        }
+        allAdvocates = [...allAdvocates, ...pendingAdvocates];
+      }
+      
+      setAdvocates(allAdvocates);
+
+      if (casesRes.data && !casesRes.error) {
+        // Handle paginated response
+        let casesData: any[] = [];
+        if (Array.isArray(casesRes.data)) {
+          casesData = casesRes.data;
+        } else if (casesRes.data && typeof casesRes.data === 'object' && 'results' in casesRes.data) {
+          casesData = (casesRes.data as any).results || [];
+        }
+        setCases(casesData);
+      }
+
+      if (feedbackRes.data && !feedbackRes.error) {
+        // Handle paginated response
+        let feedbackData: any[] = [];
+        if (Array.isArray(feedbackRes.data)) {
+          feedbackData = feedbackRes.data;
+        } else if (feedbackRes.data && typeof feedbackRes.data === 'object' && 'results' in feedbackRes.data) {
+          feedbackData = (feedbackRes.data as any).results || [];
+        }
+        setFeedback(feedbackData);
+      }
+
+      // Calculate stats from actual data
+      const newFeedbackCount = feedback.filter(f => f.status === 'new').length;
+      const pendingAdvocates = advocates.filter(a => a.approval_status === 'pending').length;
+      const approvedAdvocates = advocates.filter(a => a.approval_status === 'approved').length;
+      
+      setStats([
+        { label: 'Total Advocates', value: advocates.length, icon: Users },
+        { label: 'Total Cases', value: cases.length, icon: FileText },
+        { label: 'Pending Approvals', value: pendingAdvocates, icon: Building2 },
+        { label: 'New Feedback', value: newFeedbackCount, icon: MessageSquare },
+      ]);
+    } catch (err) {
+      console.error('Dashboard data loading error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      if (errorMessage.includes('401')) {
+        setError('Authentication expired. Please log in again.');
+      } else if (errorMessage.includes('403')) {
+        setError('Access denied. Admin privileges required.');
+      } else {
+        setError('Failed to load dashboard data. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleResolveFeedback = async (feedbackId: string) => {
+    try {
+      const response = feedbackResponse[feedbackId] || 'Thank you for your feedback!';
+      
+      // Update feedback status via API
+      await feedbackApi.updateFeedback(feedbackId, { status: 'resolved', resolution: response });
+      
+      // Refresh feedback list
+      const feedbackRes = await feedbackApi.listFeedback();
+      if (feedbackRes.data && !feedbackRes.error) {
+        setFeedback(Array.isArray(feedbackRes.data) ? feedbackRes.data : []);
+      }
+      
+      setFeedbackResponse((prev) => {
+        const updated = { ...prev };
+        delete updated[feedbackId];
+        return updated;
+      });
+    } catch (err) {
+      console.error('Failed to resolve feedback:', err);
+      setError('Failed to resolve feedback');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={session.user} onLogout={logout} />
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading dashboard...</span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={session.user} onLogout={logout} />
+        <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <p className="text-red-800">Error: {error}</p>
+              <Button onClick={loadDashboardData} className="mt-4">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,6 +211,26 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {/* Quick Actions */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-6 sm:mb-8">
+          <Button
+            onClick={() => window.location.href = '/dashboard/admin/approvals'}
+            className="w-full h-auto py-4 sm:py-6 flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <Users className="w-6 h-6" />
+            <span className="font-semibold">Review Advocate Approvals</span>
+            <span className="text-xs opacity-80">Pending registrations</span>
+          </Button>
+          <Button
+            onClick={() => window.location.href = '/dashboard/feedback'}
+            className="w-full h-auto py-4 sm:py-6 flex flex-col items-center gap-2"
+          >
+            <MessageSquare className="w-6 h-6" />
+            <span className="font-semibold">Manage Feedback</span>
+            <span className="text-xs opacity-80">User feedback & ratings</span>
+          </Button>
+        </div>
+
         {/* Case Status Overview */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Card className="border border-border bg-card">
@@ -75,9 +240,9 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {['open', 'in_progress', 'closed', 'pending'].map((status) => {
-                  const count = mockCases.filter((c) => c.status === status).length;
-                  const percentage = ((count / mockCases.length) * 100).toFixed(0);
+                {['draft', 'filed', 'pending', 'hearing', 'closed', 'dismissed'].map((status) => {
+                  const count = cases.filter((c) => c.status === status).length;
+                  const percentage = cases.length > 0 ? ((count / cases.length) * 100).toFixed(0) : '0';
                   return (
                     <div key={status}>
                       <div className="flex justify-between items-center mb-1">
@@ -109,22 +274,18 @@ export default function AdminDashboard() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground">Total Advocates</p>
-                <p className="text-2xl font-bold text-foreground">{mockAdvocates.length}</p>
+                <p className="text-2xl font-bold text-foreground">{advocates.length}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Available</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {mockAdvocates.filter((a) => a.isAvailable).length}
+                  {advocates.filter((a) => a.approval_status === 'approved').length}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Average Rating</p>
+                <p className="text-sm text-muted-foreground">Pending Approval</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {(
-                    mockAdvocates.reduce((sum, a) => sum + a.rating, 0) /
-                    mockAdvocates.length
-                  ).toFixed(1)}
-                  ⭐
+                  {advocates.filter((a) => a.approval_status === 'pending').length}
                 </p>
               </div>
             </CardContent>
@@ -139,83 +300,44 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid gap-4">
-            {mockAdvocates.map((advocate) => (
+            {advocates.map((advocate) => (
               <Card key={advocate.id} className="border border-border bg-card">
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <h3 className="font-semibold text-foreground">{advocate.name}</h3>
-                      <p className="text-sm text-muted-foreground">{advocate.licenseNumber}</p>
+                      <p className="text-sm text-muted-foreground">{advocate.email}</p>
                     </div>
                     <Badge
                       className={
-                        advocate.isAvailable
+                        advocate.approval_status === 'approved'
                           ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
+                          : advocate.approval_status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
                       }
                     >
-                      {advocate.isAvailable ? 'Available' : 'Unavailable'}
+                      {advocate.approval_status || 'pending'}
                     </Badge>
                   </div>
                   <div className="mt-4 grid sm:grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Experience</p>
-                      <p className="font-medium text-foreground">{advocate.experience} years</p>
+                      <p className="font-medium text-foreground">{advocate.experience_years || 0} years</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Rating</p>
-                      <p className="font-medium text-foreground">
-                        {advocate.rating}⭐ ({advocate.reviewCount})
-                      </p>
+                      <p className="text-muted-foreground">Specialization</p>
+                      <p className="font-medium text-foreground">{advocate.specialization || 'N/A'}</p>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Hourly Rate</p>
-                      <p className="font-medium text-foreground">₹{advocate.hourlyRate}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Cases</p>
-                      <p className="font-medium text-foreground">
-                        {mockCases.filter((c) => c.advocateId === advocate.id).length}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Police Stations */}
-        <div className="space-y-6 mt-8">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">Police Stations</h2>
-            <p className="text-sm text-muted-foreground">All registered stations</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            {mockPoliceStations.map((station) => (
-              <Card key={station.id} className="border border-border bg-card">
-                <CardHeader>
-                  <CardTitle className="text-lg">{station.name}</CardTitle>
-                  <CardDescription>{station.location}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid sm:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Phone</p>
-                      <p className="font-medium text-foreground">{station.phone}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Officers</p>
-                      <p className="font-medium text-foreground">{station.officerCount}</p>
+                      <p className="font-medium text-foreground">{advocate.phone || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Cases</p>
-                      <p className="font-medium text-foreground">{station.caseCount}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Email</p>
-                      <p className="font-medium text-foreground text-xs">{station.email}</p>
+                      <p className="font-medium text-foreground">
+                        {cases.filter((c) => c.advocate?.id === advocate.id).length}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -232,55 +354,59 @@ export default function AdminDashboard() {
           </div>
 
           <div className="space-y-4">
-            {allFeedback.length === 0 ? (
+            {feedback.length === 0 ? (
               <Card className="border border-border bg-card p-6 text-center">
                 <p className="text-muted-foreground">No feedback received yet</p>
               </Card>
             ) : (
-              allFeedback.map((feedback) => (
-                <Card key={feedback.id} className="border border-border bg-card">
+              feedback.map((feedbackItem) => (
+                <Card key={feedbackItem.id} className="border border-border bg-card">
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-foreground">{feedback.subject}</h3>
+                          <h3 className="font-semibold text-foreground">{feedbackItem.subject}</h3>
                           <Badge
                             className={
-                              feedback.status === 'new'
+                              feedbackItem.status === 'new'
                                 ? 'bg-blue-100 text-blue-800'
-                                : feedback.status === 'reviewed'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-green-100 text-green-800'
+                                : feedbackItem.status === 'under_review'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : feedbackItem.status === 'in_progress'
+                                ? 'bg-orange-100 text-orange-800'
+                                : feedbackItem.status === 'resolved'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
                             }
                           >
-                            {feedback.status}
+                            {feedbackItem.status?.replace('_', ' ') || 'new'}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mb-1">
-                          From: {feedback.userName} ({feedback.userRole})
+                          From: {feedbackItem.user?.name || 'Anonymous'} ({feedbackItem.user?.role || 'user'})
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Rating: {'⭐'.repeat(feedback.rating)} ({feedback.rating}/5)
+                          Type: {feedbackItem.feedback_type?.replace('_', ' ') || 'general'} | Priority: {feedbackItem.priority || 'medium'}
                         </p>
                       </div>
-                      <Badge variant="outline">{feedback.category}</Badge>
+                      <Badge variant="outline">{feedbackItem.feedback_type?.replace('_', ' ') || 'General'}</Badge>
                     </div>
 
-                    {expandedFeedback === feedback.id ? (
+                    {expandedFeedback === feedbackItem.id ? (
                       <div className="space-y-4 mt-4">
                         <div className="bg-secondary p-4 rounded-lg">
-                          <p className="text-sm text-foreground">{feedback.message}</p>
+                          <p className="text-sm text-foreground">{feedbackItem.message}</p>
                         </div>
 
-                        {feedback.status !== 'resolved' && (
+                        {feedbackItem.status !== 'resolved' && feedbackItem.status !== 'closed' && (
                           <div className="space-y-3">
                             <textarea
                               placeholder="Write your response to this feedback..."
-                              value={feedbackResponse[feedback.id] || ''}
+                              value={feedbackResponse[feedbackItem.id] || ''}
                               onChange={(e) =>
                                 setFeedbackResponse((prev) => ({
                                   ...prev,
-                                  [feedback.id]: e.target.value,
+                                  [feedbackItem.id]: e.target.value,
                                 }))
                               }
                               className="w-full p-3 rounded-lg border border-border bg-background text-foreground text-sm"
@@ -288,7 +414,7 @@ export default function AdminDashboard() {
                             />
                             <div className="flex gap-2">
                               <Button
-                                onClick={() => handleResolveFeedback(feedback.id)}
+                                onClick={() => handleResolveFeedback(feedbackItem.id)}
                                 className="flex-1 bg-primary hover:bg-primary/90"
                               >
                                 Mark as Resolved
@@ -304,21 +430,21 @@ export default function AdminDashboard() {
                           </div>
                         )}
 
-                        {feedback.response && (
+                        {feedbackItem.resolution && (
                           <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
                             <p className="text-xs text-green-600 font-semibold mb-1">Your Response</p>
-                            <p className="text-sm text-green-900">{feedback.response}</p>
+                            <p className="text-sm text-green-900">{feedbackItem.resolution}</p>
                           </div>
                         )}
                       </div>
                     ) : (
                       <div className="flex gap-2 mt-4">
                         <Button
-                          onClick={() => setExpandedFeedback(feedback.id)}
+                          onClick={() => setExpandedFeedback(feedbackItem.id)}
                           variant="outline"
                           className="flex-1"
                         >
-                          {feedback.status === 'resolved' ? 'View' : 'Respond'}
+                          {feedbackItem.status === 'resolved' ? 'View' : 'Respond'}
                         </Button>
                       </div>
                     )}

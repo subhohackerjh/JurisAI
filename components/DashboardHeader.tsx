@@ -50,9 +50,9 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
   return (
     <header className="border-b border-border bg-card sticky top-0 z-50">
       <div className="px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between">
-        <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Legal24Logo />
-        </Link>
+        </div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
@@ -142,6 +142,13 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
                   {user.role.replace('_', ' ')}
                 </p>
               </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/profile" className="gap-2 cursor-pointer">
+                  <User className="h-4 w-4" />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive">
                 <LogOut className="h-4 w-4" />

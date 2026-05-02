@@ -1,12 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockCases, mockAdvocates, mockPoliceStations } from '@/lib/mock-data';
+import { casesApi, advocatesApi } from '@/lib/api';
 import DashboardHeader from '@/components/DashboardHeader';
 import { FileText, Calendar, DollarSign, User, MapPin, ArrowLeft } from 'lucide-react';
 
@@ -18,14 +19,49 @@ export default function CaseDetailPage() {
     return null;
   }
 
-  const caseData = mockCases.find((c) => c.id === id);
+  const [caseData, setCaseData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!caseData) {
+  useEffect(() => {
+    const fetchCaseData = async () => {
+      try {
+        setLoading(true);
+        const response = await casesApi.getCaseDetail(id as string);
+        if (response.data) {
+          setCaseData(response.data);
+        } else {
+          setError('Case not found');
+        }
+      } catch (err) {
+        setError('Failed to load case details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchCaseData();
+    }
+  }, [id]);
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <DashboardHeader user={session.user} onLogout={logout} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <p className="text-muted-foreground">Case not found</p>
+          <p className="text-muted-foreground">Loading case details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !caseData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={session.user} onLogout={logout} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <p className="text-muted-foreground">{error || 'Case not found'}</p>
           <Link href="/dashboard">
             <Button className="mt-4">Back to Dashboard</Button>
           </Link>
@@ -34,10 +70,8 @@ export default function CaseDetailPage() {
     );
   }
 
-  const advocate = caseData.advocateId ? mockAdvocates.find((a) => a.id === caseData.advocateId) : null;
-  const station = caseData.stationId
-    ? mockPoliceStations.find((s) => s.id === caseData.stationId)
-    : null;
+  const advocate = caseData.advocate;
+  const station = caseData.court_name;
 
   const getStatusColor = (status: string) => {
     switch (status) {

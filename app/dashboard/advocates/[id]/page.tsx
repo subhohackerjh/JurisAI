@@ -1,12 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockAdvocates, mockCases } from '@/lib/mock-data';
+import { advocatesApi, casesApi } from '@/lib/api';
 import DashboardHeader from '@/components/DashboardHeader';
 import { ArrowLeft, Star, Phone, Mail, MapPin, Award } from 'lucide-react';
 
@@ -18,9 +19,53 @@ export default function AdvocateDetailPage() {
     return null;
   }
 
-  const advocate = mockAdvocates.find((a) => a.id === id);
+  const [advocate, setAdvocate] = useState<any>(null);
+  const [cases, setCases] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!advocate) {
+  useEffect(() => {
+    const fetchAdvocateData = async () => {
+      try {
+        setLoading(true);
+        const [advocateResponse, casesResponse] = await Promise.all([
+          advocatesApi.getAdvocateDetail(id as string),
+          casesApi.listCases()
+        ]);
+        
+        if (advocateResponse.data) {
+          setAdvocate(advocateResponse.data);
+        } else {
+          setError('Advocate not found');
+        }
+        
+        if (casesResponse.data) {
+          setCases(Array.isArray(casesResponse.data) ? casesResponse.data : []);
+        }
+      } catch (err) {
+        setError('Failed to load advocate details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchAdvocateData();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <DashboardHeader user={session.user} onLogout={logout} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <p className="text-muted-foreground">Loading advocate details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !advocate) {
     return (
       <div className="min-h-screen bg-background">
         <DashboardHeader user={session.user} onLogout={logout} />
@@ -34,7 +79,7 @@ export default function AdvocateDetailPage() {
     );
   }
 
-  const casesHandled = mockCases.filter((c) => c.advocateId === advocate.id).length;
+  const casesHandled = cases.filter((c: any) => c.advocate?.id === advocate.id).length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,7 +176,7 @@ export default function AdvocateDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {advocate.specializations.map((spec) => (
+              {advocate.specializations?.map((spec: any) => (
                 <Badge key={spec} className="bg-primary/10 text-primary border-primary/30">
                   {spec}
                 </Badge>

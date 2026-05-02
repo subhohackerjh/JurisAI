@@ -3,12 +3,16 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useCreateDraft, useDrafts } from '@/hooks/useDrafts';
+import { useAdvocates } from '@/hooks/useAdvocates';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   FileText, 
   PenTool, 
@@ -22,122 +26,64 @@ import {
   Eye,
   Edit3,
   Star,
-  Briefcase
+  Briefcase,
+  AlertCircle
 } from 'lucide-react';
 
 export default function DraftingPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [selectedLawyer, setSelectedLawyer] = useState(null);
+  const [selectedAdvocate, setSelectedAdvocate] = useState<string>('');
   const [documentType, setDocumentType] = useState('');
   const [requirements, setRequirements] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [draftSubmitted, setDraftSubmitted] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const { createDraft, isLoading: createLoading } = useCreateDraft();
+  const { drafts, isLoading: draftsLoading } = useDrafts();
+  const { advocates, isLoading: advocatesLoading } = useAdvocates();
 
   const documentTypes = [
-    'Contract Agreement',
-    'Legal Notice',
-    'Power of Attorney',
-    'Will & Testament',
-    'Partnership Deed',
-    'Rental Agreement',
-    'Employment Contract',
-    'ND Agreement',
-    'Memorandum of Understanding',
-    'Legal Complaint'
-  ];
-
-  const mockLawyers = [
-    {
-      id: 1,
-      name: 'Adv. Sarah Johnson',
-      specialization: 'Contract Law',
-      experience: '12 years',
-      rating: 4.9,
-      cases: 450,
-      price: '$150-300',
-      availability: 'Available',
-      image: '/api/placeholder/100/100'
-    },
-    {
-      id: 2,
-      name: 'Adv. Michael Chen',
-      specialization: 'Corporate Law',
-      experience: '8 years',
-      rating: 4.8,
-      cases: 320,
-      price: '$200-400',
-      availability: 'Busy',
-      image: '/api/placeholder/100/100'
-    },
-    {
-      id: 3,
-      name: 'Adv. Emily Rodriguez',
-      specialization: 'Family Law',
-      experience: '15 years',
-      rating: 4.9,
-      cases: 580,
-      price: '$120-250',
-      availability: 'Available',
-      image: '/api/placeholder/100/100'
-    },
-    {
-      id: 4,
-      name: 'Adv. James Wilson',
-      specialization: 'Real Estate',
-      experience: '10 years',
-      rating: 4.7,
-      cases: 410,
-      price: '$180-350',
-      availability: 'Available',
-      image: '/api/placeholder/100/100'
-    }
+    'contract_agreement',
+    'legal_notice',
+    'power_of_attorney',
+    'will_testament',
+    'partnership_deed',
+    'rental_agreement',
+    'employment_contract',
+    'nda',
+    'mou',
+    'legal_complaint',
+    'other'
   ];
 
   const handleSubmitDraft = async () => {
-    if (!selectedLawyer || !documentType || !requirements) return;
+    if (!selectedAdvocate || !documentType || !requirements) return;
     
     setIsSubmitting(true);
-    
-    // Simulate submission process
-    setTimeout(() => {
-      setDraftSubmitted(true);
-      setIsSubmitting(false);
-    }, 2000);
+    setMessage(null);
+
+    const result = await createDraft({
+      advocate: selectedAdvocate,
+      document_type: documentType,
+      requirements,
+      additional_notes: additionalNotes || undefined,
+    });
+
+    if (result.success) {
+      setMessage({ type: 'success', text: 'Draft request submitted successfully!' });
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 2000);
+    } else {
+      setMessage({ type: 'error', text: result.error || 'Failed to submit draft request' });
+    }
+
+    setIsSubmitting(false);
   };
 
   if (!user) return null;
-
-  if (draftSubmitted) {
-    return (
-      <div className="min-h-screen bg-background">
-        <DashboardHeader user={user} onLogout={() => {}} />
-        <main className="flex items-center justify-center p-6 min-h-[calc(100vh-60px)]">
-          <Card className="w-full max-w-md p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <CheckCircle className="w-16 h-16 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Draft Request Submitted!</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Your document drafting request has been sent to {selectedLawyer?.name}. 
-              You'll receive the draft within 2-3 business days.
-            </p>
-            <div className="bg-blue-50 rounded-lg p-4 mb-6">
-              <p className="text-xs text-blue-900 mb-2">
-                <strong>Request ID:</strong> DRFT-{Date.now()}
-              </p>
-              <p className="text-xs text-blue-900">
-                <strong>Estimated Delivery:</strong> {new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString()}
-              </p>
-            </div>
-            <Button onClick={() => router.push('/dashboard')} className="w-full">
-              Back to Dashboard
-            </Button>
-          </Card>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -154,81 +100,113 @@ export default function DraftingPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Lawyers Selection */}
+          {/* Advocates Selection */}
           <div className="lg:col-span-2">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Available Drafting Lawyers</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {mockLawyers.map(lawyer => (
-                  <Card 
-                    key={lawyer.id}
-                    className={`p-4 cursor-pointer transition-all ${
-                      selectedLawyer?.id === lawyer.id 
-                        ? 'ring-2 ring-primary bg-primary/5' 
-                        : 'hover:shadow-md'
-                    }`}
-                    onClick={() => setSelectedLawyer(lawyer)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-sm">{lawyer.name}</h3>
-                        <p className="text-xs text-muted-foreground">{lawyer.specialization}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                            <span className="text-xs font-medium">{lawyer.rating}</span>
+              <h2 className="text-lg font-semibold mb-4">Available Advocates</h2>
+              {advocatesLoading ? (
+                <p className="text-sm text-muted-foreground">Loading advocates...</p>
+              ) : advocates.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No advocates available.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {advocates.map(advocate => (
+                    <Card 
+                      key={advocate.id}
+                      className={`p-4 cursor-pointer transition-all ${
+                        selectedAdvocate === String(advocate.id) 
+                          ? 'ring-2 ring-primary bg-primary/5' 
+                          : 'hover:shadow-md'
+                      }`}
+                      onClick={() => setSelectedAdvocate(String(advocate.id))}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center">
+                          <User className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-sm">{advocate.name}</h3>
+                          <p className="text-xs text-muted-foreground">{advocate.specialization || 'General Practice'}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                              <span className="text-xs font-medium">{advocate.rating || 'N/A'}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {advocate.experience_years ? `${advocate.experience_years} yrs` : 'N/A'}
+                            </span>
                           </div>
-                          <span className="text-xs text-muted-foreground">({lawyer.cases} cases)</span>
-                        </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <Badge variant={lawyer.availability === 'Available' ? 'default' : 'secondary'} className="text-xs">
-                            {lawyer.availability}
-                          </Badge>
-                          <span className="text-xs font-medium text-primary">{lawyer.price}</span>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </Card>
 
             {/* Document Requirements */}
             <Card className="p-6 mt-6">
               <h2 className="text-lg font-semibold mb-4">Document Requirements</h2>
+              {message && (
+                <div className={`mb-4 p-3 rounded-lg border ${
+                  message.type === 'success' 
+                    ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
+                    : 'bg-destructive/10 border-destructive/30'
+                }`}>
+                  <p className="text-sm">{message.text}</p>
+                </div>
+              )}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Document Type</label>
-                  <select
-                    value={documentType}
-                    onChange={(e) => setDocumentType(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-border bg-background"
-                  >
-                    <option value="">Select document type...</option>
-                    {documentTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
+                  <Label htmlFor="documentType">Document Type *</Label>
+                  <Select value={documentType} onValueChange={setDocumentType}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select document type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="contract_agreement">Contract Agreement</SelectItem>
+                      <SelectItem value="legal_notice">Legal Notice</SelectItem>
+                      <SelectItem value="power_of_attorney">Power of Attorney</SelectItem>
+                      <SelectItem value="will_testament">Will & Testament</SelectItem>
+                      <SelectItem value="partnership_deed">Partnership Deed</SelectItem>
+                      <SelectItem value="rental_agreement">Rental Agreement</SelectItem>
+                      <SelectItem value="employment_contract">Employment Contract</SelectItem>
+                      <SelectItem value="nda">NDA Agreement</SelectItem>
+                      <SelectItem value="mou">Memorandum of Understanding</SelectItem>
+                      <SelectItem value="legal_complaint">Legal Complaint</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Detailed Requirements</label>
+                  <Label htmlFor="requirements">Detailed Requirements *</Label>
                   <Textarea
+                    id="requirements"
                     value={requirements}
                     onChange={(e) => setRequirements(e.target.value)}
                     placeholder="Please describe your document requirements in detail..."
                     rows={6}
-                    className="resize-none"
+                    className="mt-1 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="additionalNotes">Additional Notes (Optional)</Label>
+                  <Textarea
+                    id="additionalNotes"
+                    value={additionalNotes}
+                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                    placeholder="Any additional information or special requests..."
+                    rows={3}
+                    className="mt-1 resize-none"
                   />
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h3 className="text-sm font-semibold text-blue-900 mb-2">What happens next?</h3>
                   <ul className="text-xs text-blue-800 space-y-1">
-                    <li>1. Selected lawyer will review your requirements</li>
+                    <li>1. Selected advocate will review your requirements</li>
                     <li>2. You'll receive a draft within 2-3 business days</li>
                     <li>3. Two revisions included in the base price</li>
                     <li>4. Final document delivered in PDF & Word format</li>
@@ -237,7 +215,7 @@ export default function DraftingPage() {
 
                 <Button
                   onClick={handleSubmitDraft}
-                  disabled={!selectedLawyer || !documentType || !requirements || isSubmitting}
+                  disabled={!selectedAdvocate || !documentType || !requirements || isSubmitting}
                   className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700"
                 >
                   {isSubmitting ? (
@@ -258,36 +236,45 @@ export default function DraftingPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Selected Lawyer Info */}
-            {selectedLawyer && (
-              <Card className="p-6">
-                <h3 className="font-semibold mb-4">Selected Lawyer</h3>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center">
-                    <User className="w-8 h-8 text-white" />
+            {/* Selected Advocate Info */}
+            {selectedAdvocate && (() => {
+              const selected = advocates.find(a => String(a.id) === selectedAdvocate);
+              if (!selected) return null;
+              const advocate = selected as any;
+              return (
+                <Card className="p-6">
+                  <h3 className="font-semibold mb-4">Selected Advocate</h3>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full flex items-center justify-center">
+                      <User className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{selected.name}</h4>
+                      <p className="text-sm text-muted-foreground">{advocate.specialization || 'General Practice'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {advocate.experience ? `${advocate.experience} years experience` : 'N/A'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold">{selectedLawyer.name}</h4>
-                    <p className="text-sm text-muted-foreground">{selectedLawyer.specialization}</p>
-                    <p className="text-xs text-muted-foreground">{selectedLawyer.experience}</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Rating:</span>
+                      <span className="font-medium">{advocate.rating || 'N/A'}</span>
+                    </div>
+                    {advocate.hourlyRate && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Rate:</span>
+                        <span className="font-medium text-primary">₹{advocate.hourlyRate}/hr</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className="font-medium">{advocate.isAvailable ? 'Available' : 'Busy'}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rating:</span>
-                    <span className="font-medium">{'\u2b50'.repeat(Math.floor(selectedLawyer.rating))} {selectedLawyer.rating}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Cases:</span>
-                    <span className="font-medium">{selectedLawyer.cases}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Price:</span>
-                    <span className="font-medium text-primary">{selectedLawyer.price}</span>
-                  </div>
-                </div>
-              </Card>
-            )}
+                </Card>
+              );
+            })()}
 
             {/* Process Overview */}
             <Card className="p-6">
@@ -295,7 +282,7 @@ export default function DraftingPage() {
               <div className="space-y-4">
                 {[
                   { icon: Edit3, label: 'Requirements', desc: 'You provide details' },
-                  { icon: Briefcase, label: 'Lawyer Review', desc: 'Expert analysis' },
+                  { icon: Briefcase, label: 'Advocate Review', desc: 'Expert analysis' },
                   { icon: FileText, label: 'Draft Creation', desc: 'Document drafted' },
                   { icon: Eye, label: 'Review & Revise', desc: 'Your feedback' },
                   { icon: Download, label: 'Final Delivery', desc: 'Ready to use' }
@@ -331,6 +318,32 @@ export default function DraftingPage() {
                   </div>
                 ))}
               </div>
+            </Card>
+
+            {/* My Draft Requests */}
+            <Card className="p-6">
+              <h3 className="font-semibold mb-4">My Draft Requests</h3>
+              {draftsLoading ? (
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              ) : drafts.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No draft requests yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {drafts.slice(0, 3).map(draft => (
+                    <div key={draft.id} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium">{draft.document_type.replace('_', ' ')}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {draft.status}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(draft.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
         </div>

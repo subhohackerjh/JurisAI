@@ -33,12 +33,6 @@ export default function LoginPage() {
     }
   };
 
-  const demoAccounts = [
-    { email: 'rajesh@legalconnect.com', role: 'Advocate', password: 'password' },
-    { email: 'mohan@example.com', role: 'Customer', password: 'password' },
-    { email: 'rajesh.patel@police.gov.in', role: 'Police Officer', password: 'password' },
-    { email: 'admin@legalconnect.com', role: 'Admin', password: 'password' },
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center p-3 sm:p-4">
@@ -84,7 +78,7 @@ export default function LoginPage() {
                 <label className="text-xs sm:text-sm font-medium text-foreground">Password</label>
                 <Input
                   type="password"
-                  placeholder="Password: password"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
@@ -100,33 +94,15 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        {/* Demo Accounts */}
-        <Card className="border border-border bg-card">
-          <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="text-sm sm:text-base">Demo Accounts</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">Click to use these accounts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5 sm:space-y-2">
-              {demoAccounts.map((account) => (
-                <button
-                  key={account.email}
-                  onClick={() => {
-                    setEmail(account.email);
-                    setPassword(account.password);
-                  }}
-                  className="w-full p-2.5 sm:p-3 rounded-lg border border-border hover:bg-secondary/50 transition text-left text-xs sm:text-sm"
-                >
-                  <div className="font-medium text-foreground">{account.role}</div>
-                  <div className="text-xs text-muted-foreground truncate">{account.email}</div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Footer */}
-        <div className="text-center text-xs sm:text-sm text-muted-foreground">
+        <div className="text-center text-xs sm:text-sm text-muted-foreground space-y-2">
+          <p>
+            Don't have an account?{' '}
+            <Link href="/register" className="text-primary hover:underline font-medium">
+              Sign up
+            </Link>
+          </p>
           <p>
             <Link href="/" className="text-primary hover:underline font-medium">
               ← Back to home

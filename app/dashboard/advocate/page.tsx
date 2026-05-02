@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useCases, useDashboardStats } from '@/hooks/useCases';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,45 +10,23 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Briefcase, 
   Calendar, 
-  Clock, 
-  MapPin, 
-  DollarSign, 
-  Star, 
-  Users, 
-  CheckCircle,
+  FileText, 
+  UserCheck,
   AlertCircle,
-  Eye,
-  FileText,
-  UserCheck
+  Eye
 } from 'lucide-react';
-import { mockAvailableCases, mockInternshipApplications } from '@/lib/mock-data';
 
 export default function AdvocateDashboard() {
   const { user } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'cases' | 'internships'>('cases');
-  const [selectedCase, setSelectedCase] = useState<string | null>(null);
-
-  const availableCases = mockAvailableCases.filter(
-    case_ => case_.status === 'available'
-  );
   
-  const myCases = mockAvailableCases.filter(
-    case_ => case_.claimedBy === user?.id
-  );
+  const { cases, isLoading: casesLoading } = useCases();
+  const { stats, isLoading: statsLoading } = useDashboardStats();
 
-  const internships = mockInternshipApplications.filter(
-    app => app.advocateId === user?.id
-  );
+  const myCases = cases.filter(c => c.advocate?.id === user?.id);
 
-  const handleAcceptCase = (caseId: string) => {
-    // In real app, this would update the case status
-    alert('Case accepted! You will be redirected to case details.');
+  const handleViewCase = (caseId: string) => {
     router.push(`/dashboard/advocate/cases/${caseId}`);
-  };
-
-  const handleViewApplication = (applicationId: string) => {
-    router.push(`/dashboard/advocate/internships/${applicationId}`);
   };
 
   if (!user) return null;
@@ -63,7 +41,7 @@ export default function AdvocateDashboard() {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Advocate Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Manage your cases and internship applications</p>
+            <p className="text-sm text-muted-foreground">Manage your cases</p>
           </div>
         </div>
 
@@ -75,342 +53,116 @@ export default function AdvocateDashboard() {
                 <Briefcase className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{availableCases.length}</p>
-                <p className="text-sm text-muted-foreground">Available Cases</p>
+                <p className="text-2xl font-bold">{stats?.total_cases || 0}</p>
+                <p className="text-sm text-muted-foreground">Total Cases</p>
               </div>
             </div>
           </Card>
           <Card className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+                <AlertCircle className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{myCases.length}</p>
-                <p className="text-sm text-muted-foreground">My Cases</p>
+                <p className="text-2xl font-bold">{stats?.active_cases || 0}</p>
+                <p className="text-sm text-muted-foreground">Active Cases</p>
               </div>
             </div>
           </Card>
           <Card className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-purple-600" />
+                <FileText className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{internships.length}</p>
-                <p className="text-sm text-muted-foreground">Applications</p>
+                <p className="text-2xl font-bold">{stats?.completed_cases || 0}</p>
+                <p className="text-sm text-muted-foreground">Completed</p>
               </div>
             </div>
           </Card>
           <Card className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Star className="w-5 h-5 text-yellow-600" />
+                <UserCheck className="w-5 h-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">4.8</p>
-                <p className="text-sm text-muted-foreground">Rating</p>
+                <p className="text-2xl font-bold">{stats?.cases_handled || 0}</p>
+                <p className="text-sm text-muted-foreground">Cases Handled</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b border-border">
-          <button
-            onClick={() => setActiveTab('cases')}
-            className={`pb-3 px-1 font-medium transition-colors ${
-              activeTab === 'cases'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Available Cases
-          </button>
-          <button
-            onClick={() => setActiveTab('internships')}
-            className={`pb-3 px-1 font-medium transition-colors ${
-              activeTab === 'internships'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Internship Applications
-          </button>
-        </div>
-
-        {/* Cases Tab */}
-        {activeTab === 'cases' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
-                {selectedCase ? 'Case Details' : 'Available Cases'}
-              </h2>
-              {selectedCase && (
-                <Button variant="outline" onClick={() => setSelectedCase(null)}>
-                  Back to List
-                </Button>
-              )}
+        {/* My Cases */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold mb-4">My Cases</h2>
+          {casesLoading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">Loading cases...</p>
             </div>
-
-            {!selectedCase ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {availableCases.map(case_ => (
-                  <Card key={case_.id} className="p-6 hover:shadow-lg transition-shadow">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-2">{case_.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                          {case_.description}
-                        </p>
-                      </div>
-                      <Badge 
-                        className={
-                          case_.urgency === 'high' 
-                            ? 'bg-red-100 text-red-800' 
-                            : case_.urgency === 'medium'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
-                        }
-                      >
-                        {case_.urgency.toUpperCase()}
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium">₹{case_.budget.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        <span>{case_.location}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span>{new Date(case_.postedDate).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <UserCheck className="w-4 h-4 text-muted-foreground" />
-                        <span>{case_.customerName}</span>
-                      </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <p className="text-sm font-medium mb-2">Requirements:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {case_.requirements.map((req, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {req}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => setSelectedCase(case_.id)}
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        View Details
-                      </Button>
-                      <Button
-                        onClick={() => handleAcceptCase(case_.id)}
-                        className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Accept Case
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="p-6">
-                {(() => {
-                  const caseDetail = availableCases.find(c => c.id === selectedCase);
-                  if (!caseDetail) return null;
-                  
-                  return (
-                    <div>
-                      <div className="flex items-start justify-between mb-6">
-                        <div>
-                          <h2 className="text-xl font-bold mb-2">{caseDetail.title}</h2>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>Case ID: {caseDetail.id}</span>
-                            <Badge className={
-                              caseDetail.urgency === 'high' 
-                                ? 'bg-red-100 text-red-800' 
-                                : caseDetail.urgency === 'medium'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-green-100 text-green-800'
-                            }>
-                              {caseDetail.urgency.toUpperCase()}
-                            </Badge>
-                          </div>
-                        </div>
-                        <Button
-                          onClick={() => handleAcceptCase(caseDetail.id)}
-                          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Accept This Case
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                          <h3 className="font-semibold mb-3">Case Information</h3>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-4 h-4 text-muted-foreground" />
-                              <span className="font-medium">Category:</span>
-                              <Badge variant="secondary">{caseDetail.category}</Badge>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <DollarSign className="w-4 h-4 text-muted-foreground" />
-                              <span className="font-medium">Budget:</span>
-                              <span>₹{caseDetail.budget.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4 text-muted-foreground" />
-                              <span className="font-medium">Location:</span>
-                              <span>{caseDetail.location}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-muted-foreground" />
-                              <span className="font-medium">Posted:</span>
-                              <span>{new Date(caseDetail.postedDate).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold mb-3">Client Information</h3>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex items-center gap-2">
-                              <UserCheck className="w-4 h-4 text-muted-foreground" />
-                              <span className="font-medium">Client:</span>
-                              <span>{caseDetail.customerName}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                              <span className="font-medium">Client ID:</span>
-                              <span>{caseDetail.customerId}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mb-6">
-                        <h3 className="font-semibold mb-3">Description</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {caseDetail.description}
-                        </p>
-                      </div>
-
-                      <div>
-                        <h3 className="font-semibold mb-3">Required Skills</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {caseDetail.requirements.map((req, index) => (
-                            <Badge key={index} variant="secondary" className="text-sm">
-                              {req}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Internships Tab */}
-        {activeTab === 'internships' && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold mb-4">Internship Applications</h2>
+          ) : myCases.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No cases assigned yet.</p>
+            </div>
+          ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {internships.map(application => (
-                <Card key={application.id} className="p-6 hover:shadow-lg transition-shadow">
+              {myCases.map((caseItem) => (
+                <Card key={caseItem.id} className="p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold text-lg mb-1">{application.studentName}</h3>
-                      <p className="text-sm text-muted-foreground">{application.university}</p>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-2">{caseItem.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {caseItem.description}
+                      </p>
                     </div>
                     <Badge className={
-                      application.status === 'accepted' 
+                      caseItem.status === 'pending' 
+                        ? 'bg-yellow-100 text-yellow-800' 
+                        : caseItem.status === 'hearing'
+                        ? 'bg-blue-100 text-blue-800'
+                        : caseItem.status === 'closed'
                         ? 'bg-green-100 text-green-800'
-                        : application.status === 'reviewed'
-                        ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-gray-100 text-gray-800'
                     }>
-                      {application.status.toUpperCase()}
+                      {caseItem.status_display || caseItem.status}
                     </Badge>
                   </div>
 
-                  <div className="space-y-3 text-sm mb-4">
+                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                     <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Education:</span>
-                      <span>{application.education}</span>
+                      <span className="font-medium">{caseItem.case_type_display || caseItem.case_type}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Graduation:</span>
-                      <span>{application.year}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Experience:</span>
-                      <span>{application.experience || 'No experience'}</span>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-sm font-medium mb-2">Cover Letter:</p>
-                    <p className="text-sm text-muted-foreground italic line-clamp-3">
-                      "{application.coverLetter}"
-                    </p>
-                  </div>
-
-                  {application.skills && (
-                    <div className="mb-4">
-                      <p className="text-sm font-medium mb-2">Skills:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {application.skills.map((skill, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
+                    {caseItem.court_name && (
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium">{caseItem.court_name}</span>
                       </div>
+                    )}
+                    {caseItem.next_hearing_date && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span>{new Date(caseItem.next_hearing_date).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      <span>{caseItem.documents_count || 0} docs</span>
                     </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleViewApplication(application.id)}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Application
-                    </Button>
-                    <Button
-                      onClick={() => router.push(`/dashboard/advocate/internships/${application.id}/respond`)}
-                      className="flex-1"
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Respond
-                    </Button>
                   </div>
+
+                  <Button
+                    onClick={() => handleViewCase(caseItem.id)}
+                    className="w-full"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Case Details
+                  </Button>
                 </Card>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </main>
     </div>
   );
