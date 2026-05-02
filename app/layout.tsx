@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background">
-      <body className={`${poppins.variable} font-poppins antialiased`}>
+      <body className={`${poppins.variable} antialiased`}>
         <AuthProvider>
           {children}
         </AuthProvider>
