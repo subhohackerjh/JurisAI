@@ -82,7 +82,7 @@ export default function CustomerDashboard() {
   });
 
   const handleConnectAdvocate = (advocateId: string) => {
-    router.push(`/dashboard/customer/advocates/${advocateId}`);
+    router.push(`/dashboard/advocates/${advocateId}`);
   };
 
   const handleChatWithAI = () => {
@@ -90,7 +90,7 @@ export default function CustomerDashboard() {
   };
 
   const handleFileCase = () => {
-    router.push('/dashboard/customer/file-case');
+    router.push('/dashboard/file-case');
   };
 
   if (!user) return null;
@@ -304,7 +304,7 @@ export default function CustomerDashboard() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => router.push(`/dashboard/customer/advocates/${advocate.id}`)}
+                  onClick={() => router.push(`/dashboard/advocates/${advocate.id}`)}
                   className="flex-1"
                 >
                   View Profile

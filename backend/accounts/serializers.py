@@ -6,6 +6,13 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # Profile fields (read-only, from related UserProfile)
+    bio = serializers.SerializerMethodField()
+    city = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
+    consultation_fee = serializers.SerializerMethodField()
+    availability = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -13,9 +20,41 @@ class UserSerializer(serializers.ModelSerializer):
             'specialization', 'experience_years', 'bar_council_id',
             'rating', 'cases_handled', 'badge_number', 'station',
             'approval_status', 'rejection_reason',
-            'is_active', 'date_joined', 'last_login'
+            'is_active', 'date_joined', 'last_login',
+            # Profile fields
+            'bio', 'city', 'state', 'consultation_fee', 'availability',
         ]
-        read_only_fields = ['id', 'date_joined', 'last_login', 'rating', 'cases_handled', 'approval_status', 'rejection_reason']
+        read_only_fields = [
+            'id', 'date_joined', 'last_login', 'rating', 'cases_handled',
+            'approval_status', 'rejection_reason',
+            'bio', 'city', 'state', 'consultation_fee', 'availability',
+        ]
+
+    def _get_profile(self, obj):
+        try:
+            return obj.profile
+        except Exception:
+            return None
+
+    def get_bio(self, obj):
+        p = self._get_profile(obj)
+        return p.bio if p else None
+
+    def get_city(self, obj):
+        p = self._get_profile(obj)
+        return p.city if p else None
+
+    def get_state(self, obj):
+        p = self._get_profile(obj)
+        return p.state if p else None
+
+    def get_consultation_fee(self, obj):
+        p = self._get_profile(obj)
+        return str(p.consultation_fee) if p and p.consultation_fee else None
+
+    def get_availability(self, obj):
+        p = self._get_profile(obj)
+        return p.availability if p else 'Available'
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
