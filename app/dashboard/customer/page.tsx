@@ -49,9 +49,10 @@ export default function CustomerDashboard() {
 
       const response = await advocatesApi.listAdvocates();
       if (response.data && !response.error) {
-        const allAdvocates = Array.isArray(response.data) ? response.data : [];
+        const data = response.data as any;
+        const allAdvocates = Array.isArray(data) ? data : (data.results ?? []);
         // Filter only approved advocates
-        const approvedAdvocates = allAdvocates.filter((a) => a.approval_status === 'approved');
+        const approvedAdvocates = allAdvocates.filter((a: any) => a.approval_status === 'approved');
         setAdvocates(approvedAdvocates);
       }
     } catch (err) {

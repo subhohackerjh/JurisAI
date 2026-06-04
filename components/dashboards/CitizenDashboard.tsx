@@ -48,8 +48,8 @@ export default function CitizenDashboard() {
         } else if (casesRes.data && typeof casesRes.data === 'object' && 'results' in casesRes.data) {
           allCases = (casesRes.data as any).results || [];
         }
-        // Filter cases for this customer
-        const userCases = allCases.filter((c) => c.customer === session.user?.id);
+        // Backend returns customer as integer ID; session.user.id may be string — compare loosely
+        const userCases = allCases.filter((c) => String(c.customer) === String(session.user?.id));
         setCases(userCases);
       }
 
@@ -75,12 +75,20 @@ export default function CitizenDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open':
+      case 'filed':
+      case 'pending':
         return 'bg-blue-100 text-blue-800';
-      case 'in_progress':
+      case 'hearing':
+      case 'evidence':
+      case 'arguments':
         return 'bg-yellow-100 text-yellow-800';
+      case 'judgment':
+        return 'bg-purple-100 text-purple-800';
       case 'closed':
         return 'bg-green-100 text-green-800';
+      case 'dismissed':
+      case 'appealed':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
