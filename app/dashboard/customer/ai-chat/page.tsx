@@ -150,16 +150,17 @@ export default function AIChatPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={user} onLogout={() => {}} />
       <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-6xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg">
-            <Bot className="w-6 h-6 text-white" />
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center shadow-inner relative shrink-0">
+            <Bot className="h-6 w-6 text-white" />
+            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">AI Legal Assistant</h1>
-            <p className="text-sm text-muted-foreground">Get instant answers to your legal questions</p>
+            <h1 className="legal-page-title">AI Legal Assistant</h1>
+            <p className="legal-page-subtitle">Get instant answers to your legal questions</p>
           </div>
         </div>
 
@@ -187,11 +188,11 @@ export default function AIChatPage() {
                     <div className={`max-w-[70%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
                       <div className={`flex items-start gap-2 p-3 rounded-lg ${
                         message.sender === 'user' 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted'
+                          ? 'bg-indigo-600 text-white' 
+                          : 'bg-slate-100 text-slate-800'
                       }`}>
                         {message.sender === 'ai' && (
-                          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
                             <Bot className="w-3 h-3 text-white" />
                           </div>
                         )}

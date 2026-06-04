@@ -3,25 +3,27 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function Legal24Logo() {
+interface Legal24LogoProps {
+  href?: string;
+  className?: string;
+}
+
+export default function Legal24Logo({ href = '/', className = '' }: Legal24LogoProps) {
   return (
-    <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-      {/* Legal24 Logo Image */}
-      <div className="relative w-10 h-10">
+    <Link href={href} className={`flex items-center gap-3 flex-shrink-0 ${className}`}>
+      <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center overflow-hidden shadow-lg shadow-slate-200/50 p-1">
         <Image
           src="/image.png"
           alt="Legal24 Logo"
-          fill
-          className="object-contain"
+          width={40}
+          height={40}
+          className="w-full h-full object-contain"
           priority
         />
       </div>
-
-      {/* LEGAL 24 Text */}
-      <div className="flex flex-col">
-        <span className="text-xl font-bold text-amber-500 tracking-wider">LEGAL</span>
-        <span className="text-2xl font-bold text-amber-500">24</span>
-      </div>
+      <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+        Legal24
+      </span>
     </Link>
   );
 }

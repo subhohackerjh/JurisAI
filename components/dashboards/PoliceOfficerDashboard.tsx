@@ -56,7 +56,7 @@ export default function PoliceOfficerDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="flex items-center justify-center h-64">
@@ -70,7 +70,7 @@ export default function PoliceOfficerDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
           <Card className="border-red-200 bg-red-50">
@@ -88,22 +88,24 @@ export default function PoliceOfficerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={session.user} onLogout={logout} />
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Welcome Section */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100/80 shadow-sm mb-4">
+            <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+            <span className="text-xs font-semibold text-indigo-700 uppercase tracking-widest">Police Portal</span>
+          </div>
+          <h1 className="legal-page-title">
             Welcome, {profile?.name?.split(' ')[0] || 'Officer'}
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
+          <p className="legal-page-subtitle mt-2">
             Managing cases at {profile?.station || 'Your Station'}
           </p>
         </div>
 
-        {/* Officer Info Card */}
-        <Card className="border border-border bg-card mb-4 sm:mb-6">
+        <Card className="mb-4 sm:mb-6">
           <CardHeader className="pb-3 sm:pb-6">
             <CardTitle className="text-lg sm:text-xl">Your Details</CardTitle>
             <CardDescription className="text-xs sm:text-sm">Badge and assignment information</CardDescription>

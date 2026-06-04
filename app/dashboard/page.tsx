@@ -30,10 +30,10 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="h-10 w-10 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin mx-auto mb-4" />
+          <p className="text-slate-600 font-medium">Loading your dashboard...</p>
         </div>
       </div>
     );

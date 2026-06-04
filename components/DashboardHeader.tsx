@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { User, LogOut, Menu, X, Home, MessageSquare, Brain, PenTool, Shield, Gavel, Search, FileText, Briefcase, Users } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { User, LogOut, Menu, X, Home, MessageSquare, FileText, Briefcase, Users, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { User as UserType } from '@/lib/types';
 import Legal24Logo from './Legal24Logo';
+import { cn } from '@/lib/utils';
 
 interface DashboardHeaderProps {
   user: UserType;
@@ -22,6 +23,7 @@ interface DashboardHeaderProps {
 
 export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -38,119 +40,85 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
           { href: '/dashboard/file-case', label: 'File Case', icon: FileText },
         ]
       : user.role === 'advocate'
-      ? [
-          { href: '/dashboard/advocate', label: 'Available Cases', icon: Briefcase },
-          { href: '/dashboard/advocate/cases', label: 'My Cases', icon: FileText },
-          { href: '/dashboard/advocate/internships', label: 'Internships', icon: Users },
-        ]
-      : []),
+        ? [
+            { href: '/dashboard/advocate', label: 'Available Cases', icon: Briefcase },
+            { href: '/dashboard/advocate/cases', label: 'My Cases', icon: FileText },
+            { href: '/dashboard/advocate/internships', label: 'Internships', icon: Users },
+          ]
+        : []),
     { href: '/dashboard/feedback', label: 'Feedback', icon: MessageSquare },
   ];
 
-  return (
-    <header className="border-b border-border bg-card sticky top-0 z-50">
-      <div className="px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Legal24Logo />
-        </div>
+  const isActive = (href: string) => {
+    if (href === '/dashboard') return pathname === '/dashboard';
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link
-            href="/dashboard"
-            className="text-sm text-muted-foreground hover:text-foreground transition"
-          >
-            Dashboard
-          </Link>
-          {user.role === 'customer' && (
-            <>
-              <Link
-                href="/dashboard/customer"
-                className="text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                Find Advocates
-              </Link>
-              <Link
-                href="/dashboard/customer/ai-chat"
-                className="text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                AI Assistant
-              </Link>
-              <Link
-                href="/dashboard/file-case"
-                className="text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                File Case
-              </Link>
-            </>
-          )}
-          {user.role === 'advocate' && (
-            <>
-              <Link
-                href="/dashboard/advocate"
-                className="text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                Available Cases
-              </Link>
-              <Link
-                href="/dashboard/advocate/cases"
-                className="text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                My Cases
-              </Link>
-              <Link
-                href="/dashboard/advocate/internships"
-                className="text-sm text-muted-foreground hover:text-foreground transition"
-              >
-                Internships
-              </Link>
-            </>
-          )}
-          <Link
-            href="/dashboard/feedback"
-            className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-1"
-          >
-            <MessageSquare className="h-4 w-4" />
-            Feedback
-          </Link>
+  return (
+    <header className="border-b border-white/20 bg-white/60 backdrop-blur-2xl sticky top-0 z-50 transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
+        <Legal24Logo href="/dashboard" />
+
+        <nav className="hidden lg:flex items-center gap-1 bg-white/50 px-2 py-1.5 rounded-full border border-slate-200/60 shadow-sm backdrop-blur-md">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                'text-sm font-semibold px-4 py-2 rounded-full transition-colors relative',
+                isActive(link.href)
+                  ? 'text-indigo-700 bg-indigo-50'
+                  : 'text-slate-600 hover:text-indigo-600 hover:bg-white/80',
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* Mobile Menu Button */}
+        <div className="flex items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
             size="sm"
-            className="md:hidden"
+            className="lg:hidden rounded-full"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
 
-          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline text-sm">{user.name.split(' ')[0]}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 rounded-full border-slate-200/80 bg-white/70 shadow-sm hover:bg-white"
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-600 text-white">
+                  <User className="h-3.5 w-3.5" />
+                </span>
+                <span className="hidden sm:inline text-sm font-semibold text-slate-800 max-w-[120px] truncate">
+                  {user.name.split(' ')[0]}
+                </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <div className="px-2 py-1.5 text-sm">
-                <p className="font-medium text-foreground">{user.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                <p className="text-xs text-muted-foreground mt-1 capitalize">
+            <DropdownMenuContent align="end" className="w-52 rounded-xl border-slate-200/80 shadow-lg">
+              <div className="px-3 py-2.5 text-sm">
+                <p className="font-semibold text-slate-900">{user.name}</p>
+                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                <p className="text-xs text-indigo-600 mt-1 font-medium capitalize">
                   {user.role.replace('_', ' ')}
                 </p>
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/profile" className="gap-2 cursor-pointer">
+                <Link href="/dashboard/profile" className="gap-2 cursor-pointer font-medium">
                   <User className="h-4 w-4" />
                   Profile
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive">
+              <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive font-medium">
                 <LogOut className="h-4 w-4" />
                 Logout
               </DropdownMenuItem>
@@ -159,16 +127,20 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
         </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
-        <nav className="md:hidden border-t border-border bg-card/95 backdrop-blur-sm">
-          <div className="px-4 py-3 space-y-2">
+        <nav className="lg:hidden border-t border-slate-200/60 bg-white/80 backdrop-blur-xl">
+          <div className="max-w-7xl mx-auto px-4 py-3 space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition"
+                className={cn(
+                  'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition',
+                  isActive(link.href)
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50',
+                )}
               >
                 <link.icon className="h-4 w-4" />
                 {link.label}

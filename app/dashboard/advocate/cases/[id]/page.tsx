@@ -115,7 +115,7 @@ export default function AdvocateCaseDetail({ params }: { params: { id: string } 
 
   if (caseLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Loading case details...</p>
       </div>
     );
@@ -123,7 +123,7 @@ export default function AdvocateCaseDetail({ params }: { params: { id: string } 
 
   if (caseError || !caseDetail) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Case Not Found</h1>
           <p className="text-muted-foreground mb-4">{caseError || 'The case you are looking for does not exist or you do not have access to it.'}</p>
@@ -136,7 +136,7 @@ export default function AdvocateCaseDetail({ params }: { params: { id: string } 
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={user} onLogout={() => {}} />
       <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-6xl mx-auto">
         <Button variant="ghost" onClick={() => router.push('/dashboard/advocate')} className="gap-2 mb-4 -ml-2">

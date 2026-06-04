@@ -254,7 +254,7 @@ function ChatPageContent() {
   if (!session.user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={session.user} onLogout={logout} />
       <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-3xl mx-auto">
         {!activeConversation ? (

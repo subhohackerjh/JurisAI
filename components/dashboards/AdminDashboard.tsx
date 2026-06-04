@@ -144,7 +144,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="flex items-center justify-center h-64">
@@ -158,7 +158,7 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
           <Card className="border-red-200 bg-red-50">
@@ -176,27 +176,30 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={session.user} onLogout={logout} />
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Welcome Section */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">Admin Dashboard</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">Platform overview and management tools</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100/80 shadow-sm mb-4">
+            <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+            <span className="text-xs font-semibold text-indigo-700 uppercase tracking-widest">Admin Portal</span>
+          </div>
+          <h1 className="legal-page-title">Admin Dashboard</h1>
+          <p className="legal-page-subtitle mt-2">Platform overview and management tools</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
           {stats.map((stat, idx) => (
-            <Card key={idx} className="border border-border bg-card hover:shadow-md transition">
+            <Card key={idx} className="hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300">
               <CardContent className="pt-4 sm:pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs sm:text-sm text-muted-foreground">{stat.label}</p>
                     <p className="text-2xl sm:text-3xl font-bold text-foreground mt-1">{stat.value}</p>
                   </div>
-                  <stat.icon className="h-8 w-8 text-primary opacity-20" />
+                  <stat.icon className="h-8 w-8 text-indigo-600 opacity-30" />
                 </div>
               </CardContent>
             </Card>

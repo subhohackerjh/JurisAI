@@ -58,7 +58,7 @@ export default function FeedbackPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={user} onLogout={() => {}} />
         <main className="flex items-center justify-center p-3 sm:p-6 min-h-[calc(100vh-60px)]">
           <Card className="w-full max-w-md p-6 sm:p-8 text-center">
@@ -77,7 +77,7 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={user} onLogout={() => {}} />
       <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-2xl mx-auto">
         <div className="max-w-2xl mx-auto">

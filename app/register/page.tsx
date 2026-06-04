@@ -89,22 +89,35 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center p-3 sm:p-4">
-      <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
-        {/* Logo */}
-        <div className="flex items-center gap-3 mb-6">
-          <Legal24Logo />
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">LEGAL 24</h1>
-            <p className="text-sm text-muted-foreground">Your trusted legal services platform</p>
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900 relative overflow-x-hidden flex items-center justify-center p-4 sm:p-6 py-10">
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <svg
+          className="absolute inset-0 h-full w-full opacity-40 [mask-image:radial-gradient(ellipse_80%_80%_at_50%_50%,#000_70%,transparent_100%)]"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <pattern id="registerDotPattern" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="2" r="1.5" fill="#cbd5e1" />
+            </pattern>
+          </defs>
+          <rect x="0" y="0" width="100%" height="100%" fill="url(#registerDotPattern)" />
+        </svg>
+        <div className="absolute top-[-10%] right-[-5%] h-[45%] w-[35%] rounded-full bg-indigo-200/50 blur-[100px] mix-blend-multiply" />
+        <div className="absolute bottom-[-10%] left-[-5%] h-[45%] w-[35%] rounded-full bg-blue-200/50 blur-[100px] mix-blend-multiply" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-2xl space-y-6">
+        <div className="text-center space-y-2">
+          <div className="flex justify-center">
+            <Legal24Logo href="/" />
           </div>
+          <p className="text-slate-600 font-medium text-sm">Join India&apos;s unified legal network</p>
         </div>
 
-        {/* Register Card */}
-        <Card className="border border-border bg-card">
+        <Card className="border-white/60 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)]">
           <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="text-lg sm:text-xl">Create Account</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">Fill in your details to get started</CardDescription>
+            <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900">Create your account</CardTitle>
+            <CardDescription className="text-slate-600">Fill in your details to get started</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
@@ -298,7 +311,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full text-sm sm:text-base" disabled={isLoading}>
+              <Button type="submit" className="w-full h-11 rounded-full font-semibold shadow-[0_0_20px_rgba(79,70,229,0.25)]" disabled={isLoading}>
                 {isLoading ? 'Creating account...' : 'Create Account'}
               </Button>
             </form>
@@ -306,15 +319,15 @@ export default function RegisterPage() {
         </Card>
 
         {/* Footer */}
-        <div className="text-center text-xs sm:text-sm text-muted-foreground">
+        <div className="text-center text-sm text-slate-600">
           <p>
             Already have an account?{' '}
-            <Link href="/login" className="text-primary hover:underline font-medium">
+            <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-semibold">
               Sign in
             </Link>
           </p>
           <p className="mt-2">
-            <Link href="/" className="text-primary hover:underline font-medium">
+            <Link href="/" className="text-indigo-600 hover:text-indigo-700 font-semibold">
               ← Back to home
             </Link>
           </p>

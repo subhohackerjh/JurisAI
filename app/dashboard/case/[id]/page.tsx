@@ -41,7 +41,7 @@ export default function CaseDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <div className="max-w-4xl mx-auto px-4 py-8 text-center">
           <p className="text-muted-foreground">Loading case details...</p>
@@ -52,7 +52,7 @@ export default function CaseDetailPage() {
 
   if (error || !caseData) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <div className="max-w-4xl mx-auto px-4 py-8 text-center">
           <p className="text-muted-foreground">{error || 'Case not found'}</p>
@@ -74,7 +74,7 @@ export default function CaseDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={session.user} onLogout={logout} />
       <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-4xl mx-auto">
         <Link href="/dashboard">

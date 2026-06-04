@@ -56,7 +56,7 @@ export default function AdvocateDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center h-64">
@@ -70,7 +70,7 @@ export default function AdvocateDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card className="border-red-200 bg-red-50">
@@ -88,14 +88,17 @@ export default function AdvocateDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={session.user} onLogout={logout} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Welcome, {profile?.name || 'Advocate'}</h1>
-          <p className="text-muted-foreground">Manage your cases and client interactions</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100/80 shadow-sm mb-4">
+            <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+            <span className="text-xs font-semibold text-indigo-700 uppercase tracking-widest">Advocate Portal</span>
+          </div>
+          <h1 className="legal-page-title">Welcome, {profile?.name || 'Advocate'}</h1>
+          <p className="legal-page-subtitle mt-2">Manage your cases and client interactions</p>
         </div>
 
         {/* Stats Grid */}
@@ -106,14 +109,14 @@ export default function AdvocateDashboard() {
             { label: 'Specialization', value: profile?.specialization || 'N/A', icon: Star },
             { label: 'Status', value: profile?.approval_status || 'Unknown', icon: Clock },
           ].map((stat, idx) => (
-            <Card key={idx} className="border border-border bg-card">
+            <Card key={idx} className="">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
                     <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
                   </div>
-                  <stat.icon className="h-8 w-8 text-primary opacity-20" />
+                  <stat.icon className="h-8 w-8 text-indigo-600 opacity-30" />
                 </div>
               </CardContent>
             </Card>
@@ -128,7 +131,7 @@ export default function AdvocateDashboard() {
           </div>
 
           {cases.length === 0 ? (
-            <Card className="border border-border bg-card">
+            <Card>
               <CardContent className="pt-6 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                 <p className="text-muted-foreground">No cases assigned yet</p>
@@ -138,7 +141,7 @@ export default function AdvocateDashboard() {
             <div className="grid gap-4">
               {cases.map((caseData) => (
                 <Link key={caseData.id} href={`/dashboard/case/${caseData.id}`}>
-                  <Card className="border border-border bg-card hover:shadow-lg transition cursor-pointer">
+                  <Card className="hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
@@ -185,7 +188,7 @@ export default function AdvocateDashboard() {
 
         {/* Profile Summary */}
         <div className="mt-8">
-          <Card className="border border-border bg-card">
+          <Card>
             <CardHeader>
               <CardTitle>Your Profile</CardTitle>
               <CardDescription>Professional information</CardDescription>

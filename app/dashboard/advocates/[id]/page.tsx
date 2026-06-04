@@ -41,7 +41,7 @@ export default function AdvocateDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <div className="max-w-4xl mx-auto px-4 py-8 text-center">
           <p className="text-muted-foreground">Loading advocate details...</p>
@@ -52,7 +52,7 @@ export default function AdvocateDetailPage() {
 
   if (error || !advocate) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
         <div className="max-w-4xl mx-auto px-4 py-8 text-center">
           <p className="text-muted-foreground">Advocate not found</p>
@@ -63,7 +63,7 @@ export default function AdvocateDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={session.user} onLogout={logout} />
       <main className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
         <Link href="/dashboard/advocates">

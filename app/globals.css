@@ -5,25 +5,25 @@
 
 :root {
   --font-sans: var(--font-poppins), 'Poppins', sans-serif;
-  --background: oklch(0.98 0.001 280);
-  --foreground: oklch(0.18 0.02 280);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 280);
+  --background: oklch(0.984 0.003 264);
+  --foreground: oklch(0.21 0.02 264);
+  --card: oklch(1 0 0 / 0.85);
+  --card-foreground: oklch(0.21 0.02 264);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 280);
-  --primary: oklch(0.35 0.15 280);
-  --primary-foreground: oklch(0.98 0.001 280);
-  --secondary: oklch(0.95 0.02 280);
-  --secondary-foreground: oklch(0.35 0.15 280);
-  --muted: oklch(0.92 0.01 280);
-  --muted-foreground: oklch(0.5 0.02 280);
-  --accent: oklch(0.42 0.14 30);
-  --accent-foreground: oklch(0.98 0.001 280);
+  --popover-foreground: oklch(0.21 0.02 264);
+  --primary: oklch(0.511 0.231 264.5);
+  --primary-foreground: oklch(0.985 0.002 264);
+  --secondary: oklch(0.965 0.02 264);
+  --secondary-foreground: oklch(0.35 0.12 264);
+  --muted: oklch(0.94 0.015 264);
+  --muted-foreground: oklch(0.5 0.03 264);
+  --accent: oklch(0.94 0.04 264);
+  --accent-foreground: oklch(0.35 0.12 264);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.01 280);
-  --input: oklch(0.95 0.01 280);
-  --ring: oklch(0.35 0.15 280);
+  --border: oklch(0.91 0.015 264);
+  --input: oklch(0.96 0.01 264);
+  --ring: oklch(0.511 0.231 264.5);
   --chart-1: oklch(0.35 0.15 280);
   --chart-2: oklch(0.6 0.15 30);
   --chart-3: oklch(0.7 0.1 160);
@@ -121,6 +121,27 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-poppins), 'Poppins', sans-serif;
+  }
+}
+
+@layer utilities {
+  .legal-gradient-text {
+    @apply bg-gradient-to-r from-indigo-600 via-blue-600 to-violet-600 bg-clip-text text-transparent;
+  }
+  .legal-page-title {
+    @apply text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight;
+  }
+  .legal-page-subtitle {
+    @apply text-sm sm:text-base text-slate-600 font-medium;
+  }
+  .legal-tab-pill {
+    @apply flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold rounded-full transition-all whitespace-nowrap flex-shrink-0;
+  }
+  .legal-tab-pill-active {
+    @apply bg-indigo-600 text-white shadow-md shadow-indigo-200/50;
+  }
+  .legal-tab-pill-inactive {
+    @apply text-slate-600 hover:text-indigo-600 hover:bg-white/80 border border-transparent hover:border-slate-200/80;
   }
 }
 

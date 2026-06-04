@@ -69,7 +69,7 @@ export default function FileCasePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={session.user} onLogout={() => {}} />
 
       <main className="max-w-2xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -80,9 +80,9 @@ export default function FileCasePage() {
           </Button>
         </Link>
 
-        <Card className="border border-border bg-card">
+        <Card>
           <CardHeader className="pb-4 sm:pb-6">
-            <CardTitle className="text-xl sm:text-2xl">File a New Case</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl font-bold text-slate-900">File a New Case</CardTitle>
             <CardDescription className="text-xs sm:text-sm">
               Provide details about your legal matter
             </CardDescription>

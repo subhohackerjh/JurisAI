@@ -112,7 +112,7 @@ export default function KYCPage() {
 
   if (kycCompleted) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={user} onLogout={() => {}} />
         <main className="flex items-center justify-center p-6 min-h-[calc(100vh-60px)]">
           <Card className="w-full max-w-md p-8 text-center">
@@ -143,7 +143,7 @@ export default function KYCPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={user} onLogout={() => {}} />
       <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">

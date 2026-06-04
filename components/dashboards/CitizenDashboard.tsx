@@ -96,12 +96,12 @@ export default function CitizenDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
-        <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="flex items-center justify-center h-64">
-            <RefreshCw className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading dashboard...</span>
+            <RefreshCw className="h-8 w-8 animate-spin text-indigo-600" />
+            <span className="ml-2 text-slate-600 font-medium">Loading dashboard...</span>
           </div>
         </main>
       </div>
@@ -110,10 +110,10 @@ export default function CitizenDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
         <DashboardHeader user={session.user} onLogout={logout} />
-        <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
-          <Card className="border-red-200 bg-red-50">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <Card className="border-red-200 bg-red-50/90">
             <CardContent className="pt-6">
               <p className="text-red-800">Error: {error}</p>
               <Button onClick={loadDashboardData} className="mt-4">
@@ -128,20 +128,22 @@ export default function CitizenDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={session.user} onLogout={logout} />
 
-      <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Welcome Section */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2 line-clamp-2">
-            Welcome, {session.user.name.split(' ')[0]}!
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100/80 shadow-sm mb-4">
+            <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+            <span className="text-xs font-semibold text-indigo-700 uppercase tracking-widest">Citizen Portal</span>
+          </div>
+          <h1 className="legal-page-title line-clamp-2">
+            Welcome, {session.user.name.split(' ')[0]}
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Manage your legal cases and find advocates</p>
+          <p className="legal-page-subtitle mt-2">Manage your legal cases and find advocates</p>
         </div>
 
-        {/* Tabs - Scrollable on mobile */}
-        <div className="flex gap-1 sm:gap-2 mb-6 border-b border-border overflow-x-auto">
+        <div className="flex gap-2 mb-8 overflow-x-auto pb-1">
           {[
             { id: 'cases', label: 'My Cases', icon: FileText },
             { id: 'advocates', label: 'Advocates', icon: Users },
@@ -150,11 +152,11 @@ export default function CitizenDashboard() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+              className={
                 activeTab === tab.id
-                  ? 'border-b-2 border-primary text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+                  ? 'legal-tab-pill legal-tab-pill-active'
+                  : 'legal-tab-pill legal-tab-pill-inactive'
+              }
             >
               <tab.icon className="h-4 w-4" />
               <span>{tab.label}</span>
@@ -179,7 +181,7 @@ export default function CitizenDashboard() {
             </div>
 
             {cases.length === 0 ? (
-              <Card className="border border-border bg-card">
+              <Card>
                 <CardContent className="pt-6 text-center">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                   <p className="text-muted-foreground mb-4">No cases filed yet</p>
@@ -192,7 +194,7 @@ export default function CitizenDashboard() {
               <div className="grid gap-4">
                 {cases.map((caseData) => (
                   <Link key={caseData.id} href={`/dashboard/case/${caseData.id}`}>
-                    <Card className="border border-border bg-card hover:shadow-lg transition cursor-pointer">
+                    <Card className="hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
                       <CardHeader>
                         <div className="flex justify-between items-start">
                           <div>
@@ -243,7 +245,7 @@ export default function CitizenDashboard() {
             </div>
 
             {advocates.length === 0 ? (
-              <Card className="border border-border bg-card">
+              <Card>
                 <CardContent className="pt-6 text-center">
                   <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                   <p className="text-muted-foreground mb-4">No advocates available</p>
@@ -257,7 +259,7 @@ export default function CitizenDashboard() {
                     key={advocate.id}
                     href={`/dashboard/advocates/${advocate.id}`}
                   >
-                    <Card className="border border-border bg-card hover:shadow-lg transition cursor-pointer h-full">
+                    <Card className="hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer h-full">
                       <CardHeader>
                         <div className="flex justify-between items-start">
                           <div>
@@ -334,7 +336,7 @@ export default function CitizenDashboard() {
             </div>
 
             <Link href="/dashboard/customer/ai-chat">
-              <Card className="border border-border bg-card hover:shadow-lg transition cursor-pointer">
+              <Card className="hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>

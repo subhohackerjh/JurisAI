@@ -33,7 +33,7 @@ export default function AdvocateDashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={user} onLogout={() => {}} />
       <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
         <div className="flex items-center gap-3 mb-6">

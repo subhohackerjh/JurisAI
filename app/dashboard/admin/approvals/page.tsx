@@ -26,7 +26,7 @@ export default function AdvocateApprovalsPage() {
 
   if (!user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
@@ -76,7 +76,7 @@ export default function AdvocateApprovalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={user} onLogout={() => {}} />
       <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-6xl mx-auto">
         <div className="mb-6 sm:mb-8">
