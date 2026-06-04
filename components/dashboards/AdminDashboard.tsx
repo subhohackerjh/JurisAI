@@ -78,37 +78,28 @@ export default function AdminDashboard() {
       
       setAdvocates(allAdvocates);
 
+      let casesData: any[] = [];
       if (casesRes.data && !casesRes.error) {
-        // Handle paginated response
-        let casesData: any[] = [];
-        if (Array.isArray(casesRes.data)) {
-          casesData = casesRes.data;
-        } else if (casesRes.data && typeof casesRes.data === 'object' && 'results' in casesRes.data) {
-          casesData = (casesRes.data as any).results || [];
-        }
+        const d = casesRes.data as any;
+        casesData = Array.isArray(d) ? d : (d.results ?? []);
         setCases(casesData);
       }
 
+      let feedbackData: any[] = [];
       if (feedbackRes.data && !feedbackRes.error) {
-        // Handle paginated response
-        let feedbackData: any[] = [];
-        if (Array.isArray(feedbackRes.data)) {
-          feedbackData = feedbackRes.data;
-        } else if (feedbackRes.data && typeof feedbackRes.data === 'object' && 'results' in feedbackRes.data) {
-          feedbackData = (feedbackRes.data as any).results || [];
-        }
+        const d = feedbackRes.data as any;
+        feedbackData = Array.isArray(d) ? d : (d.results ?? []);
         setFeedback(feedbackData);
       }
 
-      // Calculate stats from actual data
-      const newFeedbackCount = feedback.filter(f => f.status === 'new').length;
-      const pendingAdvocates = advocates.filter(a => a.approval_status === 'pending').length;
-      const approvedAdvocates = advocates.filter(a => a.approval_status === 'approved').length;
-      
+      // Calculate stats from LOCAL variables (not stale state)
+      const pendingCount = allAdvocates.filter(a => a.approval_status === 'pending').length;
+      const newFeedbackCount = feedbackData.filter(f => f.status === 'new').length;
+
       setStats([
-        { label: 'Total Advocates', value: advocates.length, icon: Users },
-        { label: 'Total Cases', value: cases.length, icon: FileText },
-        { label: 'Pending Approvals', value: pendingAdvocates, icon: Building2 },
+        { label: 'Total Advocates', value: allAdvocates.length, icon: Users },
+        { label: 'Total Cases', value: casesData.length, icon: FileText },
+        { label: 'Pending Approvals', value: pendingCount, icon: Building2 },
         { label: 'New Feedback', value: newFeedbackCount, icon: MessageSquare },
       ]);
     } catch (err) {
@@ -136,7 +127,8 @@ export default function AdminDashboard() {
       // Refresh feedback list
       const feedbackRes = await feedbackApi.listFeedback();
       if (feedbackRes.data && !feedbackRes.error) {
-        setFeedback(Array.isArray(feedbackRes.data) ? feedbackRes.data : []);
+        const d = feedbackRes.data as any;
+        setFeedback(Array.isArray(d) ? d : (d.results ?? []));
       }
       
       setFeedbackResponse((prev) => {
@@ -336,7 +328,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-muted-foreground">Cases</p>
                       <p className="font-medium text-foreground">
-                        {cases.filter((c) => c.advocate?.id === advocate.id).length}
+                        {cases.filter((c) => String(c.advocate) === String(advocate.id)).length}
                       </p>
                     </div>
                   </div>

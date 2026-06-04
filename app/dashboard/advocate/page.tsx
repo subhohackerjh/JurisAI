@@ -23,7 +23,8 @@ export default function AdvocateDashboard() {
   const { cases, isLoading: casesLoading } = useCases();
   const { stats, isLoading: statsLoading } = useDashboardStats();
 
-  const myCases = cases.filter(c => c.advocate?.id === user?.id);
+  // c.advocate is an integer ID in list serializer; user.id may be a string
+  const myCases = cases.filter(c => String(c.advocate) === String(user?.id));
 
   const handleViewCase = (caseId: string) => {
     router.push(`/dashboard/advocate/cases/${caseId}`);

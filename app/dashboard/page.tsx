@@ -48,7 +48,7 @@ export default function DashboardPage() {
       return <CitizenDashboard />;
     case 'advocate':
       return <AdvocateDashboard />;
-    case 'police_officer':
+    case 'police':
       return <PoliceOfficerDashboard />;
     case 'admin':
       return <AdminDashboard />;

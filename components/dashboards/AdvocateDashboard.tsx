@@ -42,10 +42,9 @@ export default function AdvocateDashboard() {
       }
 
       if (casesRes.data && !casesRes.error) {
-        const allCases = Array.isArray(casesRes.data) ? casesRes.data : [];
-        // Filter cases assigned to this advocate
-        const myCases = allCases.filter(case_ => case_.advocate === session.user?.id);
-        setCases(myCases);
+        // Backend already filters by advocate for this role — just unpack pagination
+        const data = casesRes.data as any;
+        setCases(Array.isArray(data) ? data : (data.results ?? []));
       }
     } catch (err) {
       setError('Failed to load dashboard data');

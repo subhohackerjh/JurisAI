@@ -17,7 +17,7 @@ export default function PoliceOfficerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  if (!session.user || session.user.role !== 'police_officer') {
+  if (!session.user || session.user.role !== 'police') {
     return null;
   }
 
@@ -42,10 +42,9 @@ export default function PoliceOfficerDashboard() {
       }
 
       if (casesRes.data && !casesRes.error) {
-        const allCases = Array.isArray(casesRes.data) ? casesRes.data : [];
-        // Filter cases for this police officer's station
-        const stationCases = allCases.filter((c) => c.station === session.user?.station);
-        setCases(stationCases);
+        // Backend returns ALL cases for police role — show them all
+        const data = casesRes.data as any;
+        setCases(Array.isArray(data) ? data : (data.results ?? []));
       }
     } catch (err) {
       setError('Failed to load dashboard data');
