@@ -128,7 +128,7 @@ def mark_messages_read(request, conversation_id):
         # Mark unread messages as read
         unread_messages = conversation.messages.filter(is_read=False).exclude(sender=user)
         count = unread_messages.count()
-        unread_messages.update(is_read=True, read_at=F('read_at'))
+        unread_messages.update(is_read=True, read_at=timezone.now())
         
         return Response({'marked_read_count': count})
         
@@ -189,15 +189,18 @@ def confirm_case(request, conversation_id):
         
         # Create the case
         case_data = conversation.case_details or {}
+        # Only pass known safe optional fields from case_details
+        ALLOWED_CASE_FIELDS = {'court_name', 'court_address', 'judge_name', 'advocate_fee'}
+        extra_fields = {k: v for k, v in case_data.items() if k in ALLOWED_CASE_FIELDS and v is not None}
         case = Case.objects.create(
             title=case_data.get('title', f'Case from conversation with {conversation.customer.name}'),
-            case_type=case_data.get('case_type', 'general'),
+            case_type=case_data.get('case_type', 'other'),
             description=case_data.get('description', 'Case created from conversation'),
             customer=conversation.customer,
             advocate=conversation.advocate,
             status='filed',
             filing_date=timezone.now().date(),
-            **{k: v for k, v in case_data.items() if k not in ['title', 'case_type', 'description']}
+            **extra_fields
         )
         
         # Update conversation

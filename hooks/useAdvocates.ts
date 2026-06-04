@@ -20,7 +20,8 @@ export function useAdvocates(params?: {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setAdvocates(response.data as User[]);
+        const data = response.data as any;
+        setAdvocates(Array.isArray(data) ? data : data.results ?? []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch advocates');
@@ -93,7 +94,8 @@ export function usePendingAdvocates() {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setPendingAdvocates(response.data as User[]);
+        const data = response.data as any;
+        setPendingAdvocates(Array.isArray(data) ? data : data.results ?? []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch pending advocates');

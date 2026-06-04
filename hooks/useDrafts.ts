@@ -16,7 +16,8 @@ export function useDrafts() {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setDrafts(response.data as DraftRequest[]);
+        const data = response.data as any;
+        setDrafts(Array.isArray(data) ? data : data.results ?? []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch drafts');

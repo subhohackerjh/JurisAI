@@ -10,6 +10,9 @@ User = get_user_model()
 class ECourtsAPITestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
+        from ecourts.services import ecourts_service
+        self.original_api_key = ecourts_service.api_key
+        ecourts_service.api_key = 'test_key'
         self.admin_user = User.objects.create_user(
             email='admin@test.com',
             name='Admin User',
@@ -32,7 +35,7 @@ class ECourtsAPITestCase(TestCase):
     def test_get_ecourts_status_authenticated(self):
         """Test getting eCourts API status when authenticated"""
         self.client.force_authenticate(user=self.admin_user)
-        with patch('backend.ecourts.services.settings') as mock_settings:
+        with patch('ecourts.services.settings') as mock_settings:
             mock_settings.ECOURTS_API_KEY = 'test_key'
             response = self.client.get('/api/ecourts/status/')
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -43,7 +46,7 @@ class ECourtsAPITestCase(TestCase):
         response = self.client.get('/api/ecourts/status/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch('backend.ecourts.services.requests.get')
+    @patch('ecourts.services.requests.get')
     def test_get_case_by_cnr(self, mock_get):
         """Test fetching case by CNR"""
         self.client.force_authenticate(user=self.admin_user)
@@ -52,20 +55,20 @@ class ECourtsAPITestCase(TestCase):
         mock_response.json.return_value = {
             'case_title': 'Test Case',
             'case_type': 'Civil',
-            'cnr': 'TEST1234567890'
+            'cnr': 'TEST123456789012'
         }
         mock_get.return_value = mock_response
 
-        response = self.client.get('/api/ecourts/case/?cnr=TEST1234567890')
+        response = self.client.get('/api/ecourts/case/?cnr=TEST123456789012')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('data', response.data)
 
     def test_get_case_by_cnr_unauthenticated(self):
         """Test fetching case by CNR without authentication fails"""
-        response = self.client.get('/api/ecourts/case/?cnr=TEST1234567890')
+        response = self.client.get('/api/ecourts/case/?cnr=TEST123456789012')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch('backend.ecourts.services.requests.get')
+    @patch('ecourts.services.requests.get')
     def test_import_case_from_ecourts(self, mock_get):
         """Test importing case from eCourts"""
         self.client.force_authenticate(user=self.admin_user)
@@ -74,25 +77,25 @@ class ECourtsAPITestCase(TestCase):
         mock_response.json.return_value = {
             'case_title': 'Test Case',
             'case_type': 'Civil',
-            'cnr': 'TEST1234567890'
+            'cnr': 'TEST123456789012'
         }
         mock_get.return_value = mock_response
 
         data = {
-            'cnr': 'TEST1234567890',
+            'cnr': 'TEST123456789012',
             'advocate_id': str(self.advocate_user.id)
         }
         response = self.client.post('/api/ecourts/import/', data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn('message', response.data)
 
     def test_import_case_unauthenticated(self):
         """Test importing case without authentication fails"""
-        data = {'cnr': 'TEST1234567890'}
+        data = {'cnr': 'TEST123456789012'}
         response = self.client.post('/api/ecourts/import/', data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch('backend.ecourts.services.requests.get')
+    @patch('ecourts.services.requests.get')
     def test_search_ecourts_cases(self, mock_get):
         """Test searching eCourts cases"""
         self.client.force_authenticate(user=self.admin_user)
@@ -108,14 +111,14 @@ class ECourtsAPITestCase(TestCase):
 
         response = self.client.get('/api/ecourts/search/?court_code=DLHC01')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('data', response.data)
+        self.assertIn('results', response.data)
 
     def test_search_ecourts_unauthenticated(self):
         """Test searching eCourts without authentication fails"""
         response = self.client.get('/api/ecourts/search/?court_code=DLHC01')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch('backend.ecourts.services.requests.get')
+    @patch('ecourts.services.requests.get')
     def test_get_cause_list(self, mock_get):
         """Test getting cause list"""
         self.client.force_authenticate(user=self.admin_user)
@@ -131,9 +134,13 @@ class ECourtsAPITestCase(TestCase):
 
         response = self.client.get('/api/ecourts/causelist/?court_code=DLHC01&date=2024-01-01')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('data', response.data)
+        self.assertIn('cause_list', response.data)
 
     def test_get_cause_list_unauthenticated(self):
         """Test getting cause list without authentication fails"""
         response = self.client.get('/api/ecourts/causelist/?court_code=DLHC01&date=2024-01-01')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def tearDown(self):
+        from ecourts.services import ecourts_service
+        ecourts_service.api_key = self.original_api_key

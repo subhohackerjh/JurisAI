@@ -11,71 +11,122 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-// Helper function to make API calls
+// Attempt a silent token refresh. Returns the new access token or null on failure.
+async function tryRefreshToken(): Promise<string | null> {
+  try {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return null;
+
+    const response = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const newAccess: string = data.access;
+    if (!newAccess) return null;
+
+    // Persist the new access token (and rotated refresh token if provided)
+    localStorage.setItem('accessToken', newAccess);
+    if (data.refresh) {
+      localStorage.setItem('refreshToken', data.refresh);
+      // Keep authSession in sync
+      const saved = localStorage.getItem('authSession');
+      if (saved) {
+        try {
+          const session = JSON.parse(saved);
+          session.accessToken = newAccess;
+          session.refreshToken = data.refresh;
+          localStorage.setItem('authSession', JSON.stringify(session));
+        } catch {}
+      }
+    }
+    return newAccess;
+  } catch {
+    return null;
+  }
+}
+
+// Parse the HTTP response body safely, returning { data } or { error }
+async function parseResponse<T>(response: Response): Promise<ApiResponse<T>> {
+  const contentType = response.headers.get('content-type');
+  let data: any;
+
+  if (contentType && contentType.includes('application/json')) {
+    data = await response.json();
+  } else {
+    const text = await response.text();
+    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+      return { error: 'Authentication required. Please login again.' };
+    }
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return { error: 'Invalid response from server' };
+    }
+  }
+
+  if (!response.ok) {
+    if (response.status === 403) {
+      return { error: 'Access denied. Admin privileges required.' };
+    }
+    return { error: data?.detail || data?.message || data?.error || 'An error occurred' };
+  }
+
+  return { data };
+}
+
+// Helper function to make API calls — auto-refreshes token once on 401
 export async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
-    
-    
-    // Get token from localStorage
-    const token = localStorage.getItem('accessToken');
-    const headers: Record<string, string> = {
-      ...(options.headers as Record<string, string>),
+
+    const buildHeaders = (token: string | null): Record<string, string> => {
+      const headers: Record<string, string> = {
+        ...(options.headers as Record<string, string>),
+      };
+      if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+      }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      return headers;
     };
-    
-    // Only set Content-Type for non-FormData requests
-    if (!(options.body instanceof FormData)) {
-      headers['Content-Type'] = 'application/json';
-    }
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
-    
-    
-    // Handle non-JSON responses (like HTML error pages)
-    const contentType = response.headers.get('content-type');
-    let data;
-    
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      const text = await response.text();
-      // If we get HTML instead of JSON, it's likely an authentication error
-      if (text.includes('<!DOCTYPE') || text.includes('<html')) {
-        return { error: 'Authentication required. Please login again.' };
-      }
-      // Try to parse as JSON anyway
-      try {
-        data = JSON.parse(text);
-      } catch {
-        return { error: 'Invalid response from server' };
-      }
-    }
-    
-    if (!response.ok) {
-      // Handle specific authentication errors
-      if (response.status === 401) {
-        // Clear invalid token
+
+    // First attempt
+    let token = localStorage.getItem('accessToken');
+    let response = await fetch(url, { ...options, headers: buildHeaders(token) });
+
+    // On 401: try to silently refresh and retry once
+    if (response.status === 401) {
+      const newToken = await tryRefreshToken();
+      if (newToken) {
+        response = await fetch(url, { ...options, headers: buildHeaders(newToken) });
+      } else {
+        // Refresh also failed — clear session and report
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        localStorage.removeItem('authSession');
         return { error: 'Session expired. Please login again.' };
       }
-      if (response.status === 403) {
-        return { error: 'Access denied. Admin privileges required.' };
-      }
-      return { error: data.detail || data.message || data.error || 'An error occurred' };
     }
-    
-    return { data };
+
+    // If still 401 after retry, clear and bail
+    if (response.status === 401) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('authSession');
+      return { error: 'Session expired. Please login again.' };
+    }
+
+    return parseResponse<T>(response);
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Network error' };
   }
@@ -399,7 +450,7 @@ export const feedbackApi = {
   }) => {
     const queryParams = new URLSearchParams();
     if (params?.status) queryParams.append('status', params.status);
-    if (params?.type) queryParams.append('feedback_type', params.type);
+    if (params?.type) queryParams.append('type', params.type);
     if (params?.priority) queryParams.append('priority', params.priority);
     const queryString = queryParams.toString();
     return apiCall(`/feedback/${queryString ? `?${queryString}` : ''}`);

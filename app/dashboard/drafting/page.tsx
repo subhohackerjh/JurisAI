@@ -44,18 +44,19 @@ export default function DraftingPage() {
   const { drafts, isLoading: draftsLoading } = useDrafts();
   const { advocates, isLoading: advocatesLoading } = useAdvocates();
 
+  // Values must match backend DraftRequest.DOCUMENT_TYPE_CHOICES exactly
   const documentTypes = [
-    'contract_agreement',
-    'legal_notice',
+    'contract',
+    'notice',
     'power_of_attorney',
-    'will_testament',
-    'partnership_deed',
-    'rental_agreement',
-    'employment_contract',
+    'will',
+    'partnership',
+    'rental',
+    'employment',
     'nda',
     'mou',
-    'legal_complaint',
-    'other'
+    'complaint',
+    'other',
   ];
 
   const handleSubmitDraft = async () => {
@@ -164,16 +165,16 @@ export default function DraftingPage() {
                       <SelectValue placeholder="Select document type..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="contract_agreement">Contract Agreement</SelectItem>
-                      <SelectItem value="legal_notice">Legal Notice</SelectItem>
+                      <SelectItem value="contract">Contract Agreement</SelectItem>
+                      <SelectItem value="notice">Legal Notice</SelectItem>
                       <SelectItem value="power_of_attorney">Power of Attorney</SelectItem>
-                      <SelectItem value="will_testament">Will & Testament</SelectItem>
-                      <SelectItem value="partnership_deed">Partnership Deed</SelectItem>
-                      <SelectItem value="rental_agreement">Rental Agreement</SelectItem>
-                      <SelectItem value="employment_contract">Employment Contract</SelectItem>
+                      <SelectItem value="will">Will & Testament</SelectItem>
+                      <SelectItem value="partnership">Partnership Deed</SelectItem>
+                      <SelectItem value="rental">Rental Agreement</SelectItem>
+                      <SelectItem value="employment">Employment Contract</SelectItem>
                       <SelectItem value="nda">NDA Agreement</SelectItem>
                       <SelectItem value="mou">Memorandum of Understanding</SelectItem>
-                      <SelectItem value="legal_complaint">Legal Complaint</SelectItem>
+                      <SelectItem value="complaint">Legal Complaint</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>

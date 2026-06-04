@@ -113,7 +113,8 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         instance.save()
         
         # Update profile fields
-        profile, created = instance.profile.get_or_create(defaults={})
+        from .models import UserProfile
+        profile, created = UserProfile.objects.get_or_create(user=instance)
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
         profile.save()

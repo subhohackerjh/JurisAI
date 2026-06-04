@@ -21,7 +21,8 @@ export function useCases(params?: {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setCases(response.data as Case[]);
+        const data = response.data as any;
+        setCases(Array.isArray(data) ? data : data.results ?? []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch cases');
@@ -134,7 +135,8 @@ export function useCaseDocuments(caseId: string) {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setDocuments(response.data as CaseDocument[]);
+        const data = response.data as any;
+        setDocuments(Array.isArray(data) ? data : data.results ?? []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch documents');
@@ -207,7 +209,8 @@ export function useCaseHearings(caseId: string) {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setHearings(response.data as Hearing[]);
+        const data = response.data as any;
+        setHearings(Array.isArray(data) ? data : data.results ?? []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch hearings');
@@ -315,7 +318,8 @@ export function useCaseUpdates(caseId: string) {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setUpdates(response.data as CaseUpdate[]);
+        const data = response.data as any;
+        setUpdates(Array.isArray(data) ? data : data.results ?? []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch updates');
@@ -415,7 +419,8 @@ export function useCaseSearch() {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setResults(response.data as Case[]);
+        const data = response.data as any;
+        setResults(Array.isArray(data) ? data : data.results ?? []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
@@ -446,7 +451,8 @@ export function useUpcomingHearings() {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setHearings(response.data as Hearing[]);
+        const data = response.data as any;
+        setHearings(Array.isArray(data) ? data : data.results ?? []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch hearings');

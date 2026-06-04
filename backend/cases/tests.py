@@ -1,5 +1,8 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+import datetime
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 from rest_framework import status
 from cases.models import Case, CaseDocument, Hearing, CaseUpdate, DraftRequest
@@ -31,7 +34,7 @@ class CasesAPITestCase(TestCase):
             title='Test Case',
             description='Test case description',
             case_type='criminal',
-            status='open',
+            status='pending',
             customer=self.customer_user,
             advocate=self.advocate_user
         )
@@ -43,7 +46,7 @@ class CasesAPITestCase(TestCase):
             'title': 'New Case',
             'description': 'New case description',
             'case_type': 'civil',
-            'status': 'open'
+            'status': 'pending'
         }
         response = self.client.post('/api/cases/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -66,19 +69,25 @@ class CasesAPITestCase(TestCase):
     def test_update_case_status(self):
         """Test updating case status"""
         self.client.force_authenticate(user=self.advocate_user)
-        data = {'status': 'in_progress'}
+        data = {'status': 'hearing'}
         response = self.client.patch(f'/api/cases/{self.test_case.id}/status/', data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.test_case.refresh_from_db()
-        self.assertEqual(self.test_case.status, 'in_progress')
+        self.assertEqual(self.test_case.status, 'hearing')
 
     def test_create_case_document(self):
         """Test creating a case document"""
         self.client.force_authenticate(user=self.advocate_user)
+        test_file = SimpleUploadedFile(
+            "test_doc.pdf",
+            b"dummy content",
+            content_type="application/pdf"
+        )
         data = {
             'title': 'Test Document',
             'description': 'Test document description',
-            'file_type': 'pdf'
+            'document_type': 'petition',
+            'file': test_file
         }
         response = self.client.post(f'/api/cases/{self.test_case.id}/documents/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -89,7 +98,8 @@ class CasesAPITestCase(TestCase):
             case=self.test_case,
             title='Test Document',
             description='Test description',
-            file_type='pdf'
+            document_type='petition',
+            uploaded_by=self.advocate_user
         )
         self.client.force_authenticate(user=self.customer_user)
         response = self.client.get(f'/api/cases/{self.test_case.id}/documents/')
@@ -99,10 +109,9 @@ class CasesAPITestCase(TestCase):
         """Test creating a hearing"""
         self.client.force_authenticate(user=self.advocate_user)
         data = {
-            'date': '2024-12-01',
-            'time': '10:00:00',
-            'location': 'Test Court',
-            'description': 'Test hearing'
+            'hearing_date': (timezone.now() + datetime.timedelta(days=5)).isoformat(),
+            'court_room': 'Test Court Room',
+            'purpose': 'Test hearing'
         }
         response = self.client.post(f'/api/cases/{self.test_case.id}/hearings/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -111,9 +120,9 @@ class CasesAPITestCase(TestCase):
         """Test listing hearings"""
         Hearing.objects.create(
             case=self.test_case,
-            date='2024-12-01',
-            time='10:00:00',
-            location='Test Court'
+            hearing_date=timezone.now() + datetime.timedelta(days=5),
+            court_room='Test Court Room',
+            purpose='Test hearing purpose'
         )
         self.client.force_authenticate(user=self.customer_user)
         response = self.client.get(f'/api/cases/{self.test_case.id}/hearings/')
@@ -133,9 +142,8 @@ class CasesAPITestCase(TestCase):
         """Test creating a draft request"""
         self.client.force_authenticate(user=self.customer_user)
         data = {
-            'title': 'Draft Request',
-            'description': 'Need a legal document drafted',
-            'document_type': 'affidavit',
+            'requirements': 'Need a legal document drafted',
+            'document_type': 'notice',
             'advocate': self.advocate_user.id
         }
         response = self.client.post('/api/cases/drafts/', data)
@@ -146,9 +154,8 @@ class CasesAPITestCase(TestCase):
         DraftRequest.objects.create(
             customer=self.customer_user,
             advocate=self.advocate_user,
-            title='Draft Request',
-            description='Test draft',
-            document_type='affidavit'
+            requirements='Test draft',
+            document_type='notice'
         )
         self.client.force_authenticate(user=self.customer_user)
         response = self.client.get('/api/cases/drafts/')

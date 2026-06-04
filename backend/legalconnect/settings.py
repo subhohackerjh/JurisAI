@@ -177,3 +177,15 @@ CORS_ALLOW_HEADERS = [
 # eCourts API Configuration
 ECOURTS_API_KEY = config('ECOURTS_API_KEY', default='')
 ECOURTS_BASE_URL = config('ECOURTS_BASE_URL', default='https://api.ecourts.gov.in')
+
+# Production Security Settings (only active when DEBUG=False)
+if not DEBUG:
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'

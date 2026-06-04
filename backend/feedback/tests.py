@@ -34,12 +34,21 @@ class FeedbackAPITestCase(TestCase):
             role='admin',
             is_staff=True
         )
+        # Create a test case to associate with ratings
+        from cases.models import Case
+        self.case = Case.objects.create(
+            customer=self.customer_user,
+            advocate=self.advocate_user,
+            title='Test Case',
+            case_type='civil',
+            description='Test Case Description'
+        )
 
     def test_create_feedback(self):
         """Test creating feedback"""
         self.client.force_authenticate(user=self.customer_user)
         data = {
-            'feedback_type': 'bug',
+            'feedback_type': 'bug_report',
             'subject': 'Test Bug',
             'message': 'This is a test bug report',
             'contact_email': 'customer@test.com',
@@ -53,7 +62,7 @@ class FeedbackAPITestCase(TestCase):
         """Test listing feedback"""
         Feedback.objects.create(
             user=self.customer_user,
-            feedback_type='bug',
+            feedback_type='bug_report',
             subject='Test Bug',
             message='Test message'
         )
@@ -67,12 +76,13 @@ class FeedbackAPITestCase(TestCase):
         self.client.force_authenticate(user=self.customer_user)
         data = {
             'advocate': self.advocate_user.id,
+            'related_case': str(self.case.id),
             'rating': 5,
             'communication': 5,
             'professionalism': 5,
             'expertise': 5,
-            'value_for_money': 5,
-            'comment': 'Excellent service'
+            'timeliness': 5,
+            'review': 'Excellent service'
         }
         response = self.client.post('/api/feedback/ratings/advocate/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -95,14 +105,16 @@ class FeedbackAPITestCase(TestCase):
     def test_get_advocate_rating_summary(self):
         """Test getting advocate rating summary"""
         AdvocateRating.objects.create(
-            user=self.customer_user,
+            customer=self.customer_user,
             advocate=self.advocate_user,
+            related_case=self.case,
             rating=5,
             communication=5,
             professionalism=5,
             expertise=5,
-            value_for_money=5
+            timeliness=5
         )
+        self.client.force_authenticate(user=self.customer_user)
         response = self.client.get(f'/api/feedback/ratings/advocate/{self.advocate_user.id}/summary/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('average_rating', response.data)
@@ -116,6 +128,7 @@ class FeedbackAPITestCase(TestCase):
             features=4,
             support=4
         )
+        self.client.force_authenticate(user=self.admin_user)
         response = self.client.get('/api/feedback/ratings/system/summary/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('average_rating', response.data)
@@ -124,7 +137,7 @@ class FeedbackAPITestCase(TestCase):
         """Test getting feedback statistics"""
         Feedback.objects.create(
             user=self.customer_user,
-            feedback_type='bug',
+            feedback_type='bug_report',
             subject='Test Bug',
             message='Test message',
             status='new'

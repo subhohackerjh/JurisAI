@@ -86,7 +86,8 @@ class Case(models.Model):
     def save(self, *args, **kwargs):
         if not self.cnr_number and self.status != 'draft':
             # Generate CNR number if not exists and case is filed
-            year = self.filing_date.year if self.filing_date else self.created_at.year
+            from django.utils import timezone
+            year = self.filing_date.year if self.filing_date else (self.created_at.year if self.created_at else timezone.now().year)
             self.cnr_number = f"CNR{year}{str(self.id)[:8].upper()}"
         super().save(*args, **kwargs)
 

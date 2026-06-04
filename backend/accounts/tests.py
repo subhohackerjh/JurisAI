@@ -125,9 +125,11 @@ class AccountsAPITestCase(TestCase):
 
     def test_list_advocates(self):
         """Test listing advocates"""
+        self.client.force_authenticate(user=self.customer_user)
         response = self.client.get('/api/auth/advocates/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsInstance(response.data, list)
+        self.assertIn('results', response.data)
+        self.assertIsInstance(response.data['results'], list)
 
     def test_list_pending_advocates_admin(self):
         """Test admin can list pending advocates"""
