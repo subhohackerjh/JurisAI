@@ -22,6 +22,13 @@ export interface User {
   last_login?: string;
   avatar?: string;
   createdAt?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  bio?: string;
+  consultation_fee?: string | number;
+  availability?: string;
 }
 
 export interface Advocate extends User {

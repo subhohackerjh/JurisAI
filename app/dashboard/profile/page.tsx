@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, CheckCircle, User, Lock } from 'lucide-react';
+import type { User as UserType } from '@/lib/types';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
@@ -37,20 +38,31 @@ export default function ProfilePage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update form when profile loads
+  // Sync form when profile loads or after save
   useEffect(() => {
     if (profile) {
+      const extended = profile as UserType & {
+        address?: string;
+        city?: string;
+        state?: string;
+        pincode?: string;
+        bio?: string;
+        consultation_fee?: string | number;
+      };
       setProfileForm({
-        name: profile.name || '',
-        phone: profile.phone || '',
-        specialization: profile.specialization || '',
-        experience_years: profile.experience_years?.toString() || '',
-        address: '',
-        city: '',
-        state: '',
-        pincode: '',
-        bio: '',
-        consultation_fee: '',
+        name: extended.name || '',
+        phone: extended.phone || '',
+        specialization: extended.specialization || '',
+        experience_years: extended.experience_years?.toString() || '',
+        address: extended.address || '',
+        city: extended.city || '',
+        state: extended.state || '',
+        pincode: extended.pincode || '',
+        bio: extended.bio || '',
+        consultation_fee:
+          extended.consultation_fee != null && extended.consultation_fee !== ''
+            ? String(extended.consultation_fee)
+            : '',
       });
     }
   }, [profile]);

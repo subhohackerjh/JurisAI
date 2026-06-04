@@ -123,6 +123,76 @@ class AccountsAPITestCase(TestCase):
         response = self.client.get('/api/auth/profile/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_update_profile_returns_user_payload(self):
+        """Profile update must return nested user object with profile fields"""
+        from .models import UserProfile
+
+        self.client.force_authenticate(user=self.admin_user)
+        UserProfile.objects.get_or_create(
+            user=self.admin_user,
+            defaults={
+                'address': 'Old Street',
+                'city': 'Mumbai',
+                'state': 'Maharashtra',
+                'pincode': '400001',
+                'bio': 'Admin bio',
+            },
+        )
+        response = self.client.put(
+            '/api/auth/profile/update/',
+            {
+                'name': 'Admin Updated',
+                'phone': '9999999999',
+                'address': 'New Street',
+                'city': 'Pune',
+                'state': 'Maharashtra',
+                'pincode': '411001',
+                'bio': 'Updated bio',
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('user', response.data)
+        user_data = response.data['user']
+        self.assertEqual(user_data['name'], 'Admin Updated')
+        self.assertEqual(user_data['phone'], '9999999999')
+        self.assertEqual(user_data['address'], 'New Street')
+        self.assertEqual(user_data['city'], 'Pune')
+        self.assertEqual(user_data['pincode'], '411001')
+        self.assertEqual(user_data['bio'], 'Updated bio')
+
+    def test_change_password_authenticated(self):
+        """Authenticated user can change password with current password"""
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.put(
+            '/api/auth/password/change/',
+            {
+                'old_password': 'testpass123',
+                'new_password': 'newpass12345',
+                'new_password_confirm': 'newpass12345',
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data.get('message'), 'Password changed successfully')
+        self.admin_user.refresh_from_db()
+        self.assertTrue(self.admin_user.check_password('newpass12345'))
+
+    def test_change_password_wrong_old_password(self):
+        """Wrong current password is rejected"""
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.put(
+            '/api/auth/password/change/',
+            {
+                'old_password': 'wrongpassword',
+                'new_password': 'newpass12345',
+                'new_password_confirm': 'newpass12345',
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('old_password', response.data)
+
     def test_list_advocates(self):
         """Test listing advocates"""
         self.client.force_authenticate(user=self.customer_user)

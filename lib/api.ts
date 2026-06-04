@@ -50,6 +50,33 @@ async function tryRefreshToken(): Promise<string | null> {
   }
 }
 
+/** Turn DRF validation payloads into a single user-facing string */
+function formatApiError(data: Record<string, unknown> | null | undefined): string {
+  if (!data) return 'An error occurred';
+  if (typeof data.detail === 'string') return data.detail;
+  if (Array.isArray(data.detail)) return data.detail.map(String).join(' ');
+  if (typeof data.message === 'string') return data.message;
+  if (typeof data.error === 'string') return data.error;
+
+  const fieldMessages: string[] = [];
+  for (const [field, value] of Object.entries(data)) {
+    if (field === 'detail' || field === 'message' || field === 'error') continue;
+    if (Array.isArray(value)) {
+      const text = value.map(String).join(' ');
+      if (field === 'old_password') {
+        fieldMessages.push(text.includes('incorrect') ? 'Current password is incorrect' : text);
+      } else if (field === 'new_password' || field === 'new_password_confirm') {
+        fieldMessages.push(text);
+      } else {
+        fieldMessages.push(`${field}: ${text}`);
+      }
+    } else if (typeof value === 'string') {
+      fieldMessages.push(value);
+    }
+  }
+  return fieldMessages.length > 0 ? fieldMessages.join('. ') : 'An error occurred';
+}
+
 // Parse the HTTP response body safely, returning { data } or { error }
 async function parseResponse<T>(response: Response): Promise<ApiResponse<T>> {
   const contentType = response.headers.get('content-type');
@@ -73,7 +100,7 @@ async function parseResponse<T>(response: Response): Promise<ApiResponse<T>> {
     if (response.status === 403) {
       return { error: 'Access denied. Admin privileges required.' };
     }
-    return { error: data?.detail || data?.message || data?.error || 'An error occurred' };
+    return { error: formatApiError(data) };
   }
 
   return { data };

@@ -7,6 +7,8 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     # Profile fields (read-only, from related UserProfile)
+    address = serializers.SerializerMethodField()
+    pincode = serializers.SerializerMethodField()
     bio = serializers.SerializerMethodField()
     city = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
@@ -22,12 +24,12 @@ class UserSerializer(serializers.ModelSerializer):
             'approval_status', 'rejection_reason',
             'is_active', 'date_joined', 'last_login',
             # Profile fields
-            'bio', 'city', 'state', 'consultation_fee', 'availability',
+            'address', 'pincode', 'bio', 'city', 'state', 'consultation_fee', 'availability',
         ]
         read_only_fields = [
             'id', 'date_joined', 'last_login', 'rating', 'cases_handled',
             'approval_status', 'rejection_reason',
-            'bio', 'city', 'state', 'consultation_fee', 'availability',
+            'address', 'pincode', 'bio', 'city', 'state', 'consultation_fee', 'availability',
         ]
 
     def _get_profile(self, obj):
@@ -35,6 +37,14 @@ class UserSerializer(serializers.ModelSerializer):
             return obj.profile
         except Exception:
             return None
+
+    def get_address(self, obj):
+        p = self._get_profile(obj)
+        return p.address if p else None
+
+    def get_pincode(self, obj):
+        p = self._get_profile(obj)
+        return p.pincode if p else None
 
     def get_bio(self, obj):
         p = self._get_profile(obj)

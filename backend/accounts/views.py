@@ -53,11 +53,14 @@ class UserProfileUpdateView(generics.UpdateAPIView):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        user = serializer.save()
+        # Ensure related profile fields are reflected in the response
+        if hasattr(user, 'profile'):
+            user.profile.refresh_from_db()
         
         return Response({
             'message': 'Profile updated successfully',
-            'user': UserSerializer(instance).data
+            'user': UserSerializer(user).data
         })
 
 

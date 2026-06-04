@@ -33,8 +33,10 @@ export function useProfile() {
         setError(response.error);
         return { success: false, error: response.error };
       } else if (response.data) {
-        setProfile(response.data as User);
-        return { success: true, data: response.data };
+        const body = response.data as { user?: User; message?: string };
+        const updatedUser = body.user ?? (response.data as User);
+        setProfile(updatedUser);
+        return { success: true, data: updatedUser };
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
