@@ -146,7 +146,8 @@ export default function CitizenDashboard() {
         <div className="flex gap-2 mb-8 overflow-x-auto pb-1">
           {[
             { id: 'cases', label: 'My Cases', icon: FileText },
-            { id: 'advocates', label: 'Advocates', icon: Users },
+            { id: 'advocates', label: 'Find Advocates', icon: Users },
+            { id: 'messages', label: 'Messages', icon: MessageSquare },
             { id: 'chat', label: 'Legal AI', icon: MessageSquare },
           ].map((tab) => (
             <button
@@ -172,10 +173,10 @@ export default function CitizenDashboard() {
                 <h2 className="text-lg sm:text-xl font-semibold text-foreground">Your Cases</h2>
                 <p className="text-xs sm:text-sm text-muted-foreground">Track and manage your cases</p>
               </div>
-              <Link href="/dashboard/file-case" className="w-full sm:w-auto">
+              <Link href="/dashboard/advocates" className="w-full sm:w-auto">
                 <Button className="gap-2 w-full sm:w-auto">
                   <Plus className="h-4 w-4" />
-                  <span>File New Case</span>
+                  <span>Find an Advocate</span>
                 </Button>
               </Link>
             </div>
@@ -184,9 +185,10 @@ export default function CitizenDashboard() {
               <Card>
                 <CardContent className="pt-6 text-center">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground mb-4">No cases filed yet</p>
-                  <Link href="/dashboard/file-case">
-                    <Button variant="outline">File Your First Case</Button>
+                  <p className="text-muted-foreground mb-2">No cases yet</p>
+                  <p className="text-xs text-muted-foreground mb-4">Find an advocate, chat with them, and request a case through the conversation.</p>
+                  <Link href="/dashboard/advocates">
+                    <Button variant="outline">Find an Advocate to Get Started</Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -322,6 +324,40 @@ export default function CitizenDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Messages Tab */}
+        {activeTab === 'messages' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold text-foreground mb-1">Messages & Case Requests</h2>
+              <p className="text-sm text-muted-foreground">Chat with advocates and request cases through conversations</p>
+            </div>
+            <Link href="/dashboard/chat">
+              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                <CardContent className="pt-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">Open Inbox</h3>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      View all your conversations with advocates
+                    </p>
+                  </div>
+                  <MessageSquare className="h-8 w-8 text-primary opacity-60" />
+                </CardContent>
+              </Card>
+            </Link>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+              <p className="font-semibold mb-2">How to get a case filed:</p>
+              <ol className="space-y-1 text-xs list-decimal list-inside">
+                <li>Go to <strong>Find Advocates</strong> tab and browse available advocates</li>
+                <li>Click <strong>Send Message</strong> on an advocate's card to start a conversation</li>
+                <li>Chat with the advocate and explain your legal problem</li>
+                <li>Click <strong>"Request Case"</strong> button in the chat when ready</li>
+                <li>Fill in case details — the advocate will review and confirm</li>
+                <li>Once confirmed, your case is created and you can track it here</li>
+              </ol>
+            </div>
           </div>
         )}
 
