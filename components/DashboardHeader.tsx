@@ -35,15 +35,17 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     ...(user.role === 'customer'
       ? [
-          { href: '/dashboard/customer', label: 'Find Advocates', icon: Search },
-          { href: '/dashboard/customer/ai-chat', label: 'AI Assistant', icon: MessageSquare },
-          { href: '/dashboard/file-case', label: 'File Case', icon: FileText },
+          { href: '/dashboard/advocates', label: 'Find Advocates', icon: Search },
+          { href: '/dashboard/chat', label: 'Messages', icon: MessageSquare },
+          { href: '/dashboard/ecourts', label: 'eCourts', icon: Briefcase },
+          { href: '/dashboard/customer/ai-chat', label: 'AI Assistant', icon: FileText },
         ]
       : user.role === 'advocate'
         ? [
-            { href: '/dashboard/advocate', label: 'Available Cases', icon: Briefcase },
+            { href: '/dashboard/advocate', label: 'Dashboard', icon: Briefcase },
             { href: '/dashboard/advocate/cases', label: 'My Cases', icon: FileText },
-            { href: '/dashboard/advocate/internships', label: 'Internships', icon: Users },
+            { href: '/dashboard/chat', label: 'Messages', icon: MessageSquare },
+            { href: '/dashboard/ecourts', label: 'eCourts', icon: Search },
           ]
         : []),
     { href: '/dashboard/feedback', label: 'Feedback', icon: MessageSquare },

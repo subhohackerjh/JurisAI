@@ -44,17 +44,42 @@ export default function AdvocateCaseDetail() {
 
   const { case: caseDetail, isLoading: caseLoading, error: caseError, refetch: refetchCase } = useCaseDetail(id);
   const { updates, isLoading: updatesLoading, createUpdate } = useCaseUpdates(id);
-  const { hearings, isLoading: hearingsLoading } = useCaseHearings(id);
+  const { hearings, isLoading: hearingsLoading, createHearing, updateHearing } = useCaseHearings(id);
   const { documents, isLoading: documentsLoading, uploadDocument, deleteDocument } = useCaseDocuments(id);
+
+  // Document upload
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadType, setUploadType] = useState('other');
   const [uploadDescription, setUploadDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+
   // Fee editing
   const [editingFee, setEditingFee] = useState(false);
   const [feeValue, setFeeValue] = useState('');
   const [isSavingFee, setIsSavingFee] = useState(false);
+
+  // Case status update
+  const [newStatus, setNewStatus] = useState('');
+  const [statusNote, setStatusNote] = useState('');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [showStatusForm, setShowStatusForm] = useState(false);
+
+  // Schedule hearing form
+  const [showHearingForm, setShowHearingForm] = useState(false);
+  const [hearingForm, setHearingForm] = useState({
+    hearing_date: '',
+    hearing_type: 'miscellaneous',
+    court_room: '',
+    judge_name: '',
+    purpose: '',
+  });
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  // Mark hearing completed
+  const [completingHearingId, setCompletingHearingId] = useState<string | null>(null);
+  const [hearingOutcome, setHearingOutcome] = useState('');
+  const [isCompletingHearing, setIsCompletingHearing] = useState(false);
 
   const handleSaveFee = async () => {
     const fee = parseFloat(feeValue);
@@ -84,6 +109,68 @@ export default function AdvocateCaseDetail() {
       }
     } finally {
       setIsSavingFee(false);
+    }
+  };
+
+  // Update case status
+  const handleUpdateStatus = async () => {
+    if (!newStatus) return;
+    setIsUpdatingStatus(true);
+    setMessage(null);
+    try {
+      const res = await casesApi.updateCaseStatus(id, { status: newStatus, note: statusNote });
+      if (res.error) {
+        setMessage({ type: 'error', text: res.error });
+      } else {
+        setMessage({ type: 'success', text: `Case status updated to "${newStatus}"` });
+        setShowStatusForm(false);
+        setStatusNote('');
+        setNewStatus('');
+        refetchCase();
+      }
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  // Schedule a new hearing
+  const handleScheduleHearing = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hearingForm.hearing_date || !hearingForm.purpose) return;
+    setIsScheduling(true);
+    setMessage(null);
+    try {
+      const result = await createHearing(hearingForm);
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Hearing scheduled successfully!' });
+        setShowHearingForm(false);
+        setHearingForm({ hearing_date: '', hearing_type: 'miscellaneous', court_room: '', judge_name: '', purpose: '' });
+        refetchCase();
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Failed to schedule hearing' });
+      }
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  // Mark a hearing as completed
+  const handleCompleteHearing = async (hearingId: string) => {
+    if (!hearingOutcome.trim()) return;
+    setIsCompletingHearing(true);
+    setMessage(null);
+    try {
+      const result = await updateHearing(hearingId, { is_completed: true, outcome: hearingOutcome });
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Hearing marked as completed!' });
+        setCompletingHearingId(null);
+        setHearingOutcome('');
+        refetchCase();
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Failed to update hearing' });
+      }
+    } finally {
+      setIsCompletingHearing(false);
     }
   };
 
@@ -238,11 +325,17 @@ export default function AdvocateCaseDetail() {
               </div>
             </Card>
             <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <div>
+              <div className="flex items-start gap-3">
+                <FileText className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Status</p>
-                  <p className="font-semibold">{caseDetail.status_display || caseDetail.status}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-semibold">{caseDetail.status_display || caseDetail.status}</p>
+                    {!['closed','dismissed'].includes(caseDetail.status) && (
+                      <button onClick={() => { setNewStatus(caseDetail.status); setShowStatusForm(true); setActiveTab('updates'); }}
+                        className="text-xs text-primary hover:underline">Update</button>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>
@@ -343,6 +436,52 @@ export default function AdvocateCaseDetail() {
         {/* Updates Tab */}
         {activeTab === 'updates' && (
           <div className="space-y-4">
+
+            {/* ── Status Update Form ── */}
+            {showStatusForm && (
+              <Card className="p-5 border-primary/30 bg-primary/5">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" /> Update Case Status
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs">New Status *</Label>
+                    <Select value={newStatus} onValueChange={setNewStatus}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select new status..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="hearing">Hearing Scheduled</SelectItem>
+                        <SelectItem value="evidence">Evidence Phase</SelectItem>
+                        <SelectItem value="arguments">Arguments</SelectItem>
+                        <SelectItem value="judgment">Judgment Pending</SelectItem>
+                        <SelectItem value="closed">✅ Closed (Case Won/Settled)</SelectItem>
+                        <SelectItem value="dismissed">❌ Dismissed</SelectItem>
+                        <SelectItem value="appealed">Appealed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Note (visible to client)</Label>
+                    <Textarea
+                      className="mt-1 text-sm resize-none"
+                      rows={2}
+                      placeholder="e.g., Judge has reserved judgment, next date 15 Jan..."
+                      value={statusNote}
+                      onChange={(e) => setStatusNote(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="flex-1" onClick={handleUpdateStatus} disabled={!newStatus || isUpdatingStatus}>
+                      {isUpdatingStatus ? 'Updating...' : 'Confirm Status Update'}
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowStatusForm(false)}>Cancel</Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             <Card className="p-6">
               <h3 className="text-lg font-semibold mb-4">Add Case Update</h3>
               {message && (
@@ -407,72 +546,133 @@ export default function AdvocateCaseDetail() {
 
         {/* Hearing Dates Tab */}
         {activeTab === 'hearing' && (
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Hearings</h3>
-            {hearingsLoading ? (
-              <p className="text-sm text-muted-foreground">Loading hearings...</p>
-            ) : hearings.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No hearings scheduled yet.</p>
-            ) : (
-              <div className="space-y-4">
-                {hearings.map((hearing) => (
-                  <div key={hearing.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="font-semibold text-lg">{hearing.hearing_type.replace('_', ' ')}</h4>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>{new Date(hearing.hearing_date).toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            <span>{new Date(hearing.hearing_date).toLocaleTimeString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <Badge className={
-                        hearing.is_completed 
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }>
-                        {hearing.is_completed ? 'COMPLETED' : 'UPCOMING'}
-                      </Badge>
+          <div className="space-y-4">
+            {/* Schedule Hearing Form */}
+            {showHearingForm ? (
+              <Card className="p-5 border-primary/30 bg-primary/5">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" /> Schedule New Hearing
+                </h3>
+                <form onSubmit={handleScheduleHearing} className="space-y-3">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Hearing Date & Time *</Label>
+                      <Input type="datetime-local" className="mt-1 text-sm"
+                        value={hearingForm.hearing_date}
+                        onChange={(e) => setHearingForm(f => ({ ...f, hearing_date: e.target.value }))}
+                        required />
                     </div>
-                    
-                    <div className="space-y-2 text-sm">
-                      {hearing.judge_name && (
-                        <div className="flex items-center gap-2">
-                          <Gavel className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-medium">Judge:</span>
-                          <span>{hearing.judge_name}</span>
-                        </div>
-                      )}
-                      {hearing.court_room && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-medium">Court Room:</span>
-                          <span>{hearing.court_room}</span>
-                        </div>
-                      )}
+                    <div>
+                      <Label className="text-xs">Hearing Type *</Label>
+                      <Select value={hearingForm.hearing_type} onValueChange={(v) => setHearingForm(f => ({ ...f, hearing_type: v }))}>
+                        <SelectTrigger className="mt-1 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="mention">Mention</SelectItem>
+                          <SelectItem value="arguments">Arguments</SelectItem>
+                          <SelectItem value="evidence">Evidence</SelectItem>
+                          <SelectItem value="cross_examination">Cross Examination</SelectItem>
+                          <SelectItem value="judgment">Judgment</SelectItem>
+                          <SelectItem value="miscellaneous">Miscellaneous</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    
-                    <div className="mt-3 p-3 bg-muted/30 rounded">
-                      <p className="text-sm font-medium mb-1">Purpose:</p>
-                      <p className="text-sm">{hearing.purpose}</p>
+                    <div>
+                      <Label className="text-xs">Court Room</Label>
+                      <Input className="mt-1 text-sm" placeholder="e.g., Room 3"
+                        value={hearingForm.court_room}
+                        onChange={(e) => setHearingForm(f => ({ ...f, court_room: e.target.value }))} />
                     </div>
-
-                    {hearing.outcome && (
-                      <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded">
-                        <p className="text-sm font-medium mb-1 text-green-800 dark:text-green-200">Outcome:</p>
-                        <p className="text-sm text-green-700 dark:text-green-300">{hearing.outcome}</p>
-                      </div>
-                    )}
+                    <div>
+                      <Label className="text-xs">Judge Name</Label>
+                      <Input className="mt-1 text-sm" placeholder="Hon. Justice..."
+                        value={hearingForm.judge_name}
+                        onChange={(e) => setHearingForm(f => ({ ...f, judge_name: e.target.value }))} />
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <div>
+                    <Label className="text-xs">Purpose *</Label>
+                    <Textarea className="mt-1 text-sm resize-none" rows={2}
+                      placeholder="Purpose of this hearing..."
+                      value={hearingForm.purpose}
+                      onChange={(e) => setHearingForm(f => ({ ...f, purpose: e.target.value }))}
+                      required />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" type="submit" className="flex-1" disabled={isScheduling}>
+                      {isScheduling ? 'Scheduling...' : 'Schedule Hearing'}
+                    </Button>
+                    <Button size="sm" type="button" variant="outline" className="flex-1" onClick={() => setShowHearingForm(false)}>Cancel</Button>
+                  </div>
+                </form>
+              </Card>
+            ) : (
+              <Button variant="outline" className="w-full border-dashed" onClick={() => setShowHearingForm(true)}>
+                <Calendar className="w-4 h-4 mr-2" /> Schedule New Hearing
+              </Button>
             )}
-          </Card>
+
+            {/* Hearings list */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Scheduled Hearings</h3>
+              {hearingsLoading ? (
+                <p className="text-sm text-muted-foreground">Loading hearings...</p>
+              ) : hearings.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No hearings scheduled yet. Use the button above to add one.</p>
+              ) : (
+                <div className="space-y-4">
+                  {hearings.map((hearing) => (
+                    <div key={hearing.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold">{hearing.hearing_type.replace('_', ' ').toUpperCase()}</h4>
+                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
+                            <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(hearing.hearing_date).toLocaleDateString()}</span>
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(hearing.hearing_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            {hearing.court_room && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{hearing.court_room}</span>}
+                            {hearing.judge_name && <span className="flex items-center gap-1"><Gavel className="w-3 h-3" />{hearing.judge_name}</span>}
+                          </div>
+                        </div>
+                        <Badge className={hearing.is_completed ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}>
+                          {hearing.is_completed ? '✓ Done' : 'Upcoming'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">{hearing.purpose}</p>
+                      {hearing.outcome && (
+                        <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded text-sm text-green-800 dark:text-green-200">
+                          <span className="font-medium">Outcome: </span>{hearing.outcome}
+                        </div>
+                      )}
+                      {/* Mark as completed */}
+                      {!hearing.is_completed && (
+                        completingHearingId === hearing.id ? (
+                          <div className="mt-3 space-y-2">
+                            <Textarea
+                              className="text-sm resize-none" rows={2}
+                              placeholder="Enter hearing outcome / next steps..."
+                              value={hearingOutcome}
+                              onChange={(e) => setHearingOutcome(e.target.value)}
+                            />
+                            <div className="flex gap-2">
+                              <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700"
+                                onClick={() => handleCompleteHearing(hearing.id)}
+                                disabled={!hearingOutcome.trim() || isCompletingHearing}>
+                                {isCompletingHearing ? 'Saving...' : '✓ Mark Completed'}
+                              </Button>
+                              <Button size="sm" variant="outline" className="flex-1" onClick={() => { setCompletingHearingId(null); setHearingOutcome(''); }}>Cancel</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button size="sm" variant="outline" className="mt-3 w-full" onClick={() => setCompletingHearingId(hearing.id)}>
+                            <CheckCircle className="w-3 h-3 mr-1" /> Mark as Completed
+                          </Button>
+                        )
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
         )}
 
         {/* Documents Tab */}
@@ -630,19 +830,24 @@ export default function AdvocateCaseDetail() {
             <Card className="p-6">
               <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
+                <Button className="w-full justify-start" variant="outline"
+                  onClick={() => router.push('/dashboard/chat')}>
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Message Client
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button className="w-full justify-start" variant="outline"
+                  onClick={() => setActiveTab('documents')}>
                   <FileText className="w-4 h-4 mr-2" />
-                  View Documents
+                  View / Upload Documents
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button className="w-full justify-start" variant="outline"
+                  onClick={() => { setActiveTab('hearing'); setShowHearingForm(true); }}>
                   <Calendar className="w-4 h-4 mr-2" />
                   Schedule Hearing
                 </Button>
-                <Button className="w-full justify-start">
+                <Button className="w-full justify-start"
+                  disabled={['closed','dismissed'].includes(caseDetail.status)}
+                  onClick={() => { setActiveTab('updates'); setShowStatusForm(true); }}>
                   <TrendingUp className="w-4 h-4 mr-2" />
                   Update Case Status
                 </Button>
