@@ -27,7 +27,7 @@ export default function AdvocateDashboard() {
   const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
 
   useEffect(() => {
-    const load = async () => {
+    const load = async (initial = false) => {
       try {
         const res = await messagingApi.listConversations();
         if (res.data) {
@@ -35,10 +35,13 @@ export default function AdvocateDashboard() {
           setConversations(Array.isArray(data) ? data : (data.results ?? []));
         }
       } finally {
-        setConvLoading(false);
+        if (initial) setConvLoading(false);
       }
     };
-    load();
+    load(true);
+    // Poll every 10 seconds to refresh unread counts on dashboard
+    const interval = setInterval(() => load(false), 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Backend already scopes cases by advocate role — all cases returned belong to this advocate

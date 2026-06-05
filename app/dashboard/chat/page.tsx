@@ -42,24 +42,74 @@ function ConversationView({ conversationId, currentUser, onBack }: {
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 
-  const loadConversation = async () => {
+  // Track last known message count so we only scroll on NEW messages
+  const lastMsgCountRef = useRef(0);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const isPollingRef = useRef(false); // prevent overlapping polls
+
+  const loadConversation = async (silent = false) => {
+    // silent=true means background poll — don't show loading spinner
+    if (!silent) setLoading(true);
     try {
       const res = await messagingApi.getConversation(conversationId);
       if (res.data) {
-        setConversation(res.data);
-        await messagingApi.markMessagesRead(conversationId);
-      } else {
+        const conv = res.data as any;
+        setConversation((prev: any) => {
+          // Only update if something changed (avoid unnecessary re-renders)
+          const prevCount = prev?.messages?.length ?? 0;
+          const newCount = conv.messages?.length ?? 0;
+          if (silent && prevCount === newCount && prev?.status === conv.status) return prev;
+          return conv;
+        });
+        // Mark messages read on initial load only
+        if (!silent) await messagingApi.markMessagesRead(conversationId);
+      } else if (!silent) {
         setError(res.error || 'Conversation not found');
       }
     } catch {
-      setError('Failed to load conversation');
+      if (!silent) setError('Failed to load conversation');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
-  useEffect(() => { loadConversation(); }, [conversationId]);
-  useEffect(() => { scrollToBottom(); }, [conversation?.messages]);
+  // Initial load
+  useEffect(() => {
+    loadConversation(false);
+  }, [conversationId]);
+
+  // Auto-scroll when new messages arrive
+  useEffect(() => {
+    const count = conversation?.messages?.length ?? 0;
+    if (count > lastMsgCountRef.current) {
+      scrollToBottom();
+      lastMsgCountRef.current = count;
+    }
+  }, [conversation?.messages?.length]);
+
+  // Polling — every 3 seconds while tab is visible
+  useEffect(() => {
+    const poll = async () => {
+      if (isPollingRef.current) return; // skip if previous poll still running
+      if (document.visibilityState === 'hidden') return;
+      isPollingRef.current = true;
+      await loadConversation(true);
+      isPollingRef.current = false;
+    };
+
+    pollingRef.current = setInterval(poll, 3000);
+
+    // Pause polling when tab is hidden, resume when visible
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [conversationId]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +117,7 @@ function ConversationView({ conversationId, currentUser, onBack }: {
     setSending(true);
     try {
       const res = await messagingApi.sendMessage(conversationId, { content: input.trim() });
-      if (res.data) { setInput(''); await loadConversation(); }
+      if (res.data) { setInput(''); await loadConversation(false); }
     } finally { setSending(false); }
   };
 
@@ -85,7 +135,7 @@ function ConversationView({ conversationId, currentUser, onBack }: {
         court_name: caseForm.court_name || undefined,
       });
       if (res.error) { setRequestError(res.error); }
-      else { setShowRequestForm(false); await loadConversation(); }
+      else { setShowRequestForm(false); await loadConversation(false); }
     } finally { setIsRequesting(false); }
   };
 
@@ -94,7 +144,7 @@ function ConversationView({ conversationId, currentUser, onBack }: {
     setIsConfirming(true);
     try {
       const res = await messagingApi.confirmCase(conversationId, 'Case accepted');
-      if (!res.error) await loadConversation();
+      if (!res.error) await loadConversation(false);
     } finally { setIsConfirming(false); }
   };
 
@@ -105,7 +155,7 @@ function ConversationView({ conversationId, currentUser, onBack }: {
     setIsRejecting(true);
     try {
       const res = await messagingApi.rejectCase(conversationId, rejectReason);
-      if (!res.error) { setShowRejectForm(false); setRejectReason(''); await loadConversation(); }
+      if (!res.error) { setShowRejectForm(false); setRejectReason(''); await loadConversation(false); }
     } finally { setIsRejecting(false); }
   };
 
