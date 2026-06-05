@@ -231,8 +231,10 @@ class DashboardStatsView(generics.GenericAPIView):
             cases = Case.objects.none()
         
         stats['total_cases'] = cases.count()
-        stats['pending_cases'] = cases.filter(status='pending').count()
-        stats['active_cases'] = cases.filter(status__in=['hearing', 'evidence', 'arguments']).count()
+        stats['pending_cases'] = cases.filter(status__in=['pending', 'filed']).count()
+        stats['active_cases'] = cases.filter(
+            status__in=['filed', 'pending', 'hearing', 'evidence', 'arguments', 'judgment']
+        ).count()
         stats['completed_cases'] = cases.filter(status__in=['closed', 'dismissed']).count()
         stats['recent_cases'] = CaseListSerializer(
             cases.order_by('-updated_at')[:5], 

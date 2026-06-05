@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCaseDetail, useCaseUpdates, useCaseHearings, useCaseDocuments } from '@/hooks/useCases';
+import { casesApi } from '@/lib/api';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -41,7 +42,7 @@ export default function AdvocateCaseDetail() {
   const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const { case: caseDetail, isLoading: caseLoading, error: caseError } = useCaseDetail(id);
+  const { case: caseDetail, isLoading: caseLoading, error: caseError, refetch: refetchCase } = useCaseDetail(id);
   const { updates, isLoading: updatesLoading, createUpdate } = useCaseUpdates(id);
   const { hearings, isLoading: hearingsLoading } = useCaseHearings(id);
   const { documents, isLoading: documentsLoading, uploadDocument, deleteDocument } = useCaseDocuments(id);
@@ -50,6 +51,41 @@ export default function AdvocateCaseDetail() {
   const [uploadType, setUploadType] = useState('other');
   const [uploadDescription, setUploadDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  // Fee editing
+  const [editingFee, setEditingFee] = useState(false);
+  const [feeValue, setFeeValue] = useState('');
+  const [isSavingFee, setIsSavingFee] = useState(false);
+
+  const handleSaveFee = async () => {
+    const fee = parseFloat(feeValue);
+    if (isNaN(fee) || fee < 0) return;
+    setIsSavingFee(true);
+    setMessage(null);
+    try {
+      const res = await casesApi.updateCaseStatus(id, { status: caseDetail?.status || 'filed' });
+      // Use a direct PATCH via casesApi detail update
+      const patchRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/cases/${id}/`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+          body: JSON.stringify({ advocate_fee: fee }),
+        }
+      );
+      if (patchRes.ok) {
+        setMessage({ type: 'success', text: 'Advocate fee updated!' });
+        setEditingFee(false);
+        refetchCase();
+      } else {
+        setMessage({ type: 'error', text: 'Failed to update fee' });
+      }
+    } finally {
+      setIsSavingFee(false);
+    }
+  };
 
   const handleAddUpdate = async () => {
     if (!newUpdate.trim()) return;
@@ -164,11 +200,40 @@ export default function AdvocateCaseDetail() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <DollarSign className="w-5 h-5 text-green-600" />
-                <div>
+              <div className="flex items-start gap-3">
+                <DollarSign className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Advocate Fee</p>
-                  <p className="font-semibold">{caseDetail.advocate_fee ? `₹${caseDetail.advocate_fee.toLocaleString()}` : 'Not set'}</p>
+                  {editingFee ? (
+                    <div className="flex gap-1 mt-1">
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        placeholder="Enter fee (₹)"
+                        value={feeValue}
+                        onChange={(e) => setFeeValue(e.target.value)}
+                        className="w-full text-sm border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                        autoFocus
+                      />
+                      <Button size="sm" className="h-7 px-2 text-xs" onClick={handleSaveFee} disabled={isSavingFee}>
+                        {isSavingFee ? '...' : 'Save'}
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setEditingFee(false)}>✕</Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold">
+                        {caseDetail.advocate_fee ? `₹${Number(caseDetail.advocate_fee).toLocaleString()}` : 'Not set'}
+                      </p>
+                      <button
+                        onClick={() => { setFeeValue(caseDetail.advocate_fee ? String(caseDetail.advocate_fee) : ''); setEditingFee(true); }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        {caseDetail.advocate_fee ? 'Edit' : '+ Set fee'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
