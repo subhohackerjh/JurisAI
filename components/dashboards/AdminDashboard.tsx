@@ -8,12 +8,14 @@ import { Users, FileText, Building2, MessageSquare, RefreshCw } from 'lucide-rea
 import { advocatesApi, casesApi, feedbackApi, profileApi } from '@/lib/api';
 import DashboardHeader from '@/components/DashboardHeader';
 import { useState, useEffect } from 'react';
+import { useRouter as useNextRouter } from 'next/navigation';
 
 export default function AdminDashboard() {
   const { session, logout } = useAuth();
   const [expandedFeedback, setExpandedFeedback] = useState<string | null>(null);
   const [feedbackResponse, setFeedbackResponse] = useState<Record<string, string>>({});
   
+  const adminRouter = useNextRouter();
   // Data states
   const [advocates, setAdvocates] = useState<any[]>([]);
   const [cases, setCases] = useState<any[]>([]);
@@ -209,7 +211,7 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <div className="grid sm:grid-cols-2 gap-4 mb-6 sm:mb-8">
           <Button
-            onClick={() => window.location.href = '/dashboard/admin/approvals'}
+            onClick={() => adminRouter.push('/dashboard/admin/approvals')}
             className="w-full h-auto py-4 sm:py-6 flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"
           >
             <Users className="w-6 h-6" />
@@ -217,7 +219,7 @@ export default function AdminDashboard() {
             <span className="text-xs opacity-80">Pending registrations</span>
           </Button>
           <Button
-            onClick={() => window.location.href = '/dashboard/feedback'}
+            onClick={() => adminRouter.push('/dashboard/feedback')}
             className="w-full h-auto py-4 sm:py-6 flex flex-col items-center gap-2"
           >
             <MessageSquare className="w-6 h-6" />

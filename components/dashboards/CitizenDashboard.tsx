@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +14,8 @@ import DashboardHeader from '@/components/DashboardHeader';
 
 export default function CitizenDashboard() {
   const { session, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'cases' | 'advocates' | 'chat'>('cases');
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'cases' | 'advocates' | 'messages' | 'chat'>('cases');
   const [cases, setCases] = useState<any[]>([]);
   const [advocates, setAdvocates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -303,7 +305,7 @@ export default function CitizenDashboard() {
                                 const response = await messagingApi.startConversation(advocate.id);
                                 if (response.data && (response.data as any).id) {
                                   // Redirect to conversation or open messaging modal
-                                  window.location.href = `/dashboard/chat?conversation=${(response.data as any).id}`;
+                                  router.push(`/dashboard/chat?conversation=${(response.data as any).id}`);
                                 }
                               } catch (error) {
                                 console.error('Failed to start conversation:', error);

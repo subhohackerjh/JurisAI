@@ -31,10 +31,11 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
     router.push('/');
   };
 
-  const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', icon: Home },
-    ...(user.role === 'customer'
+  // Role-specific nav — each role has its own Dashboard link, no shared one
+  const roleLinks: { href: string; label: string; icon: any }[] =
+    user.role === 'customer'
       ? [
+          { href: '/dashboard', label: 'Dashboard', icon: Home },
           { href: '/dashboard/advocates', label: 'Find Advocates', icon: Search },
           { href: '/dashboard/chat', label: 'Messages', icon: MessageSquare },
           { href: '/dashboard/ecourts', label: 'eCourts', icon: Briefcase },
@@ -42,18 +43,31 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
         ]
       : user.role === 'advocate'
         ? [
-            { href: '/dashboard/advocate', label: 'Dashboard', icon: Briefcase },
+            { href: '/dashboard/advocate', label: 'Dashboard', icon: Home },
             { href: '/dashboard/advocate/cases', label: 'My Cases', icon: FileText },
             { href: '/dashboard/chat', label: 'Messages', icon: MessageSquare },
             { href: '/dashboard/ecourts', label: 'eCourts', icon: Search },
           ]
-        : []),
+        : user.role === 'admin'
+          ? [
+              { href: '/dashboard', label: 'Dashboard', icon: Home },
+              { href: '/dashboard/admin/approvals', label: 'Approvals', icon: Users },
+            ]
+          : [
+              { href: '/dashboard', label: 'Dashboard', icon: Home },
+            ];
+
+  const navLinks = [
+    ...roleLinks,
     { href: '/dashboard/feedback', label: 'Feedback', icon: MessageSquare },
   ];
 
   const isActive = (href: string) => {
-    if (href === '/dashboard') return pathname === '/dashboard';
-    return pathname === href || pathname.startsWith(`${href}/`);
+    if (pathname === href) return true;
+    // Exact-match-only for routes that have children to avoid double-highlight
+    const exactOnly = ['/dashboard', '/dashboard/advocate'];
+    if (exactOnly.includes(href)) return false;
+    return pathname.startsWith(`${href}/`);
   };
 
   return (
