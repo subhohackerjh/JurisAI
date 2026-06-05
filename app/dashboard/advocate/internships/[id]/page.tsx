@@ -1,18 +1,20 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { GraduationCap, Clock } from 'lucide-react';
 
-export default function InternshipApplicationDetail({ params }: { params: { id: string } }) {
+export default function InternshipApplicationDetail() {
   const { user } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <DashboardHeader user={user} onLogout={() => {}} />
       <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-4xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
@@ -21,7 +23,7 @@ export default function InternshipApplicationDetail({ params }: { params: { id: 
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Internship Application</h1>
-            <p className="text-sm text-muted-foreground">Application ID: {params.id}</p>
+            <p className="text-sm text-muted-foreground">Application ID: {id}</p>
           </div>
         </div>
 

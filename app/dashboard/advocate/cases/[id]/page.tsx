@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCaseDetail, useCaseUpdates, useCaseHearings, useCaseDocuments } from '@/hooks/useCases';
 import DashboardHeader from '@/components/DashboardHeader';
@@ -30,18 +30,21 @@ import {
   ArrowLeft
 } from 'lucide-react';
 
-export default function AdvocateCaseDetail({ params }: { params: { id: string } }) {
+export default function AdvocateCaseDetail() {
   const { user } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+
   const [activeTab, setActiveTab] = useState<'updates' | 'hearing' | 'client' | 'documents'>('updates');
   const [newUpdate, setNewUpdate] = useState('');
   const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const { case: caseDetail, isLoading: caseLoading, error: caseError } = useCaseDetail(params.id);
-  const { updates, isLoading: updatesLoading, createUpdate } = useCaseUpdates(params.id);
-  const { hearings, isLoading: hearingsLoading } = useCaseHearings(params.id);
-  const { documents, isLoading: documentsLoading, uploadDocument, deleteDocument } = useCaseDocuments(params.id);
+  const { case: caseDetail, isLoading: caseLoading, error: caseError } = useCaseDetail(id);
+  const { updates, isLoading: updatesLoading, createUpdate } = useCaseUpdates(id);
+  const { hearings, isLoading: hearingsLoading } = useCaseHearings(id);
+  const { documents, isLoading: documentsLoading, uploadDocument, deleteDocument } = useCaseDocuments(id);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadType, setUploadType] = useState('other');
