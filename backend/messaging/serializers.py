@@ -23,13 +23,18 @@ class ConversationSerializer(serializers.ModelSerializer):
     advocate = UserSerializer(read_only=True)
     messages = MessageSerializer(many=True, read_only=True)
     unread_count = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Conversation
-        fields = ['id', 'customer', 'advocate', 'created_at', 'updated_at', 'is_active', 'messages', 'unread_count']
-    
+        fields = [
+            'id', 'customer', 'advocate',
+            'created_at', 'updated_at', 'is_active',
+            # Case workflow fields — REQUIRED by frontend Flow B
+            'status', 'case_details', 'case_id', 'advocate_notes',
+            'messages', 'unread_count',
+        ]
+
     def get_unread_count(self, obj):
-        """Get unread message count for the current user"""
         request = self.context.get('request')
         if request and request.user:
             return obj.messages.filter(is_read=False).exclude(sender=request.user).count()

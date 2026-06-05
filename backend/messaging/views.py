@@ -22,7 +22,11 @@ def list_conversations(request):
         conversations = Conversation.objects.filter(advocate=user, is_active=True)
     else:
         return Response({'error': 'Invalid user role for messaging'}, status=status.HTTP_403_FORBIDDEN)
-    
+
+    conversations = conversations.select_related(
+        'customer__profile', 'advocate__profile'
+    ).prefetch_related('messages__sender__profile')
+
     serializer = ConversationSerializer(conversations, many=True, context={'request': request})
     return Response(serializer.data)
 
@@ -60,17 +64,18 @@ def get_conversation(request, conversation_id):
     user = request.user
     
     try:
-        conversation = Conversation.objects.get(id=conversation_id, is_active=True)
-        
-        # Check if user is part of this conversation
+        conversation = Conversation.objects.select_related(
+            'customer__profile', 'advocate__profile'
+        ).prefetch_related('messages__sender__profile').get(id=conversation_id, is_active=True)
+
         if user.role == 'customer' and conversation.customer != user:
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
         elif user.role == 'advocate' and conversation.advocate != user:
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
-        
+
         serializer = ConversationSerializer(conversation, context={'request': request})
         return Response(serializer.data)
-        
+
     except Conversation.DoesNotExist:
         return Response({'error': 'Conversation not found'}, status=status.HTTP_404_NOT_FOUND)
 

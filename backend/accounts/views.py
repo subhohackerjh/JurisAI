@@ -89,7 +89,7 @@ class AdvocateListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        queryset = User.objects.filter(role='advocate', is_active=True)
+        queryset = User.objects.filter(role='advocate', is_active=True, approval_status='approved')
         
         # Filter by specialization
         specialization = self.request.query_params.get('specialization')
@@ -115,7 +115,7 @@ class AdvocateListView(generics.ListAPIView):
 class AdvocateDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = User.objects.filter(role='advocate', is_active=True)
+    queryset = User.objects.filter(role='advocate', is_active=True).select_related('profile')
     lookup_field = 'pk'
 
 
