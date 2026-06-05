@@ -115,6 +115,10 @@ export default function AdvocateCaseDetail() {
   // Update case status
   const handleUpdateStatus = async () => {
     if (!newStatus) return;
+    if (newStatus === caseDetail?.status && !statusNote.trim()) {
+      setMessage({ type: 'error', text: 'Please select a different status or add a note.' });
+      return;
+    }
     setIsUpdatingStatus(true);
     setMessage(null);
     try {
@@ -332,7 +336,7 @@ export default function AdvocateCaseDetail() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold">{caseDetail.status_display || caseDetail.status}</p>
                     {!['closed','dismissed'].includes(caseDetail.status) && (
-                      <button onClick={() => { setNewStatus(caseDetail.status); setShowStatusForm(true); setActiveTab('updates'); }}
+                      <button onClick={() => { setNewStatus(''); setShowStatusForm(true); setActiveTab('updates'); }}
                         className="text-xs text-primary hover:underline">Update</button>
                     )}
                   </div>
@@ -473,6 +477,11 @@ export default function AdvocateCaseDetail() {
                     />
                   </div>
                   <div className="flex gap-2">
+                    {newStatus && newStatus === caseDetail?.status && (
+                      <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                        ⚠️ This is already the current status. Add a note below to record it, or choose a different status.
+                      </p>
+                    )}
                     <Button size="sm" className="flex-1" onClick={handleUpdateStatus} disabled={!newStatus || isUpdatingStatus}>
                       {isUpdatingStatus ? 'Updating...' : 'Confirm Status Update'}
                     </Button>

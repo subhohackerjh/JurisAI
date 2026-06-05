@@ -123,22 +123,37 @@ class CaseStatusUpdateSerializer(serializers.ModelSerializer):
         old_status = instance.status
         new_status = validated_data.get('status', old_status)
         note = validated_data.pop('note', '')
-        
+
+        # Capture display names BEFORE super().update() changes instance.status
+        status_choices = dict(Case.STATUS_CHOICES)
+        old_status_display = status_choices.get(old_status, old_status)
+        new_status_display = status_choices.get(new_status, new_status)
+
         instance = super().update(instance, validated_data)
-        
-        # Create status change update
+
+        # Only create an update record when the status actually changed
         if old_status != new_status:
             CaseUpdate.objects.create(
                 case=instance,
                 update_type='status_change',
-                title=f'Status changed from {instance.get_status_display()} to {dict(Case.STATUS_CHOICES).get(new_status)}',
-                description=note or f'Case status updated to {dict(Case.STATUS_CHOICES).get(new_status)}',
+                title=f'Status changed from {old_status_display} to {new_status_display}',
+                description=note or f'Case status updated to {new_status_display}',
                 created_by=self.context['request'].user,
                 old_status=old_status,
                 new_status=new_status,
                 is_customer_visible=True
             )
-        
+        elif note:
+            # Same status but advocate added a note — record it separately
+            CaseUpdate.objects.create(
+                case=instance,
+                update_type='note',
+                title=f'Note added on {new_status_display}',
+                description=note,
+                created_by=self.context['request'].user,
+                is_customer_visible=True
+            )
+
         return instance
 
 
