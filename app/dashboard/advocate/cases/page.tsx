@@ -16,9 +16,9 @@ export default function AdvocateCasesPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
-  const { cases, isLoading, error, refetch } = useCases({ status: statusFilter || undefined });
+  const { cases, isLoading, error, refetch } = useCases({ status: statusFilter === 'all' ? undefined : statusFilter || undefined });
 
   if (!user) return null;
 
@@ -78,7 +78,7 @@ export default function AdvocateCasesPage() {
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="filed">Filed</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="hearing">Hearing</SelectItem>
