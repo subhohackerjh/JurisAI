@@ -1,9 +1,20 @@
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+
+
+class LoginRateThrottle(AnonRateThrottle):
+    rate = '10/hour'
+    scope = 'login'
+
+
+class RegisterRateThrottle(AnonRateThrottle):
+    rate = '20/hour'
+    scope = 'register'
 
 from .serializers import (
     UserSerializer, UserRegistrationSerializer, UserLoginSerializer,
@@ -17,6 +28,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [RegisterRateThrottle]
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -31,6 +43,7 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_classes = [LoginRateThrottle]
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):

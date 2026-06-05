@@ -6,8 +6,17 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from django.http import Http404
+
+def hidden_admin(request):
+    raise Http404
+
+# Change the admin URL from the default /admin/ to a secret path
+# Set ADMIN_URL env var in production to something like 'secret-panel-xyz123'
+ADMIN_URL = getattr(settings, 'ADMIN_URL', 'admin')
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(f'{ADMIN_URL}/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/cases/', include('cases.urls')),
     path('api/feedback/', include('feedback.urls')),

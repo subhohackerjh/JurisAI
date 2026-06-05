@@ -1,13 +1,19 @@
+import os
 from rest_framework import serializers
 from .models import Case, CaseDocument, Hearing, CaseUpdate, DraftRequest
 from accounts.serializers import UserSerializer
+
+ALLOWED_DOCUMENT_EXTENSIONS = {'.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.txt', '.odt'}
+ALLOWED_DOCUMENT_MIME_PREFIXES = ('application/pdf', 'application/msword', 'application/vnd.openxmlformats',
+                                   'application/vnd.oasis', 'image/jpeg', 'image/png', 'text/plain')
+MAX_DOCUMENT_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
 class CaseDocumentSerializer(serializers.ModelSerializer):
     uploaded_by_name = serializers.CharField(source='uploaded_by.name', read_only=True)
     file_url = serializers.SerializerMethodField()
     file_size = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = CaseDocument
         fields = [
@@ -15,6 +21,33 @@ class CaseDocumentSerializer(serializers.ModelSerializer):
             'uploaded_by', 'uploaded_by_name', 'description', 'created_at'
         ]
         read_only_fields = ['id', 'uploaded_by', 'created_at']
+
+    def validate_file(self, value):
+        # Size check
+        if value.size > MAX_DOCUMENT_SIZE:
+            raise serializers.ValidationError(
+                f'File too large. Maximum allowed size is {MAX_DOCUMENT_SIZE // (1024*1024)} MB.'
+            )
+        # Extension check
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+            raise serializers.ValidationError(
+                f'Unsupported file type "{ext}". Allowed: {", ".join(sorted(ALLOWED_DOCUMENT_EXTENSIONS))}'
+            )
+        # Content-type check (defence in depth)
+        content_type = getattr(value, 'content_type', '')
+        if content_type and not any(content_type.startswith(p) for p in ALLOWED_DOCUMENT_MIME_PREFIXES):
+            raise serializers.ValidationError(
+                f'File content type "{content_type}" is not allowed.'
+            )
+        return value
+
+    def validate_title(self, value):
+        if len(value.strip()) < 2:
+            raise serializers.ValidationError('Title must be at least 2 characters.')
+        if len(value) > 255:
+            raise serializers.ValidationError('Title must be 255 characters or less.')
+        return value.strip()
     
     def get_file_url(self, obj):
         if obj.file:

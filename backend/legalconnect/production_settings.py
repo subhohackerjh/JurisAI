@@ -290,10 +290,8 @@ REST_FRAMEWORK = {
 }
 
 # Custom User Agent for API requests
-import requests
-requests.defaults.default_headers = {
-    'User-Agent': 'Legal24/1.0 (Production Server)'
-}
+# requests.defaults does not exist — use Session or set headers per call instead
+# This is handled in ecourts/services.py per-request headers
 
 # Production-specific settings
 if not DEBUG:

@@ -55,10 +55,9 @@ class CaseDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = CaseDetailSerializer
     lookup_field = 'pk'
-    
+
     def get_queryset(self):
         user = self.request.user
-        
         if user.role == 'customer':
             return Case.objects.filter(customer=user)
         elif user.role == 'advocate':
@@ -66,6 +65,30 @@ class CaseDetailView(generics.RetrieveUpdateDestroyAPIView):
         elif user.role in ['admin', 'police']:
             return Case.objects.all()
         return Case.objects.none()
+
+    def update(self, request, *args, **kwargs):
+        # Customers may only READ cases — never update them
+        if request.user.role == 'customer':
+            return Response(
+                {'error': 'Customers cannot modify case details.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        # Police are read-only too
+        if request.user.role == 'police':
+            return Response(
+                {'error': 'Police officers have read-only access.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        # Only advocates (own cases) and admins can delete
+        if request.user.role == 'customer':
+            return Response(
+                {'error': 'Customers cannot delete cases.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 class CaseStatusUpdateView(generics.UpdateAPIView):

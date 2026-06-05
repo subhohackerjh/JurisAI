@@ -45,3 +45,11 @@ class CreateMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ['content']
+
+    def validate_content(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError('Message content cannot be empty.')
+        if len(value) > 5000:
+            raise serializers.ValidationError('Message too long. Maximum 5000 characters.')
+        return value
