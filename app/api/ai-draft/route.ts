@@ -134,6 +134,18 @@ export async function POST(request: NextRequest) {
   if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'gsk_your_key_here') {
     return NextResponse.json({ error: 'AI service not configured. Set GROQ_API_KEY in .env' }, { status: 503 });
   }
+
+  // Role gate: advocates always allowed; customers need `paid=true` header set by client
+  // after verifying payment on the backend.
+  const callerRole = request.headers.get('x-user-role') ?? '';
+  const callerPaid = request.headers.get('x-user-paid') === 'true';
+  if (callerRole === 'customer' && !callerPaid) {
+    return NextResponse.json(
+      { error: 'AI document drafting requires a completed payment. Please make a payment first.' },
+      { status: 403 }
+    );
+  }
+
   try {
     // Rate limit: 5 document drafts per hour per IP (drafts use 4× more tokens)
     const ip = getClientIP(request);

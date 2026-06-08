@@ -1,0 +1,319 @@
+'use client';
+
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import DashboardHeader from '@/components/DashboardHeader';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReactMarkdown from 'react-markdown';
+import {
+  Lock, Sparkles, FileText, Download, Copy, CheckCheck,
+  Loader2, IndianRupee, ChevronRight, Wand2, Eye, PenTool
+} from 'lucide-react';
+import { api } from '@/lib/api';
+import Link from 'next/link';
+
+const DOCUMENT_TYPES = [
+  { value: 'notice',            label: 'Legal Notice',            icon: '📬', desc: 'Section 80 CPC / Section 138 NI Act' },
+  { value: 'contract',          label: 'Contract Agreement',       icon: '📄', desc: 'Indian Contract Act 1872' },
+  { value: 'power_of_attorney', label: 'Power of Attorney',        icon: '✍️', desc: 'Registration Act 1908' },
+  { value: 'will',              label: 'Will & Testament',         icon: '📜', desc: 'Indian Succession Act 1925' },
+  { value: 'rental',            label: 'Rental / Lease Agreement', icon: '🏠', desc: 'Transfer of Property Act 1882' },
+  { value: 'nda',               label: 'Non-Disclosure Agreement', icon: '🔒', desc: 'Indian Contract Act 1872' },
+  { value: 'complaint',         label: 'Legal Complaint / FIR',    icon: '⚖️', desc: 'CrPC / BNSS' },
+  { value: 'affidavit',         label: 'Affidavit',                icon: '📋', desc: 'Oaths Act 1969' },
+];
+
+// ── Payment Gate ──────────────────────────────────────────────────────────────
+function PaywallCard() {
+  const router = useRouter();
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center px-4">
+      <Card className="p-8 max-w-md w-full text-center border-amber-200 bg-amber-50/40">
+        <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+          <Lock className="w-8 h-8 text-amber-600" />
+        </div>
+        <h2 className="text-xl font-bold mb-2">AI Drafting is a Paid Feature</h2>
+        <p className="text-muted-foreground text-sm mb-6">
+          Unlock AI-generated legal documents with a one-time payment. Advocates review
+          is always free — or pay to draft instantly yourself.
+        </p>
+
+        <div className="bg-white rounded-xl border p-4 mb-6 text-left space-y-2">
+          <p className="text-sm font-semibold mb-3">What you get:</p>
+          {[
+            '8 document types — notice, contract, will, POA & more',
+            'Powered by Groq AI with full Indian law knowledge',
+            'Instant download — no waiting for advocate',
+            'Unlimited drafts after payment',
+          ].map(f => (
+            <div key={f} className="flex items-start gap-2 text-sm">
+              <span className="text-green-600 mt-0.5">✓</span> {f}
+            </div>
+          ))}
+        </div>
+
+        <Button
+          className="w-full bg-indigo-600 hover:bg-indigo-700 mb-3"
+          onClick={() => router.push('/dashboard/payments')}
+        >
+          <IndianRupee className="w-4 h-4 mr-2" /> Make a Payment to Unlock
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Already paid?{' '}
+          <button onClick={() => window.location.reload()} className="text-indigo-600 hover:underline">
+            Refresh this page
+          </button>
+        </p>
+
+        <div className="mt-6 pt-4 border-t text-sm text-muted-foreground">
+          Want a human advocate to draft for you instead?{' '}
+          <Link href="/dashboard/advocates" className="text-indigo-600 hover:underline">
+            Find an Advocate →
+          </Link>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ── Drafting UI (same as advocate tool, customer variant) ─────────────────────
+function DraftingTool({ hasPaid }: { hasPaid: boolean }) {
+  const { user } = useAuth();
+  const [docType, setDocType] = useState('notice');
+  const [requirements, setRequirements] = useState('');
+  const [partiesInfo, setPartiesInfo] = useState('');
+  const [additionalContext, setAdditionalContext] = useState('');
+  const [draftContent, setDraftContent] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [tab, setTab] = useState<'edit' | 'preview'>('edit');
+  const abortRef = useRef<AbortController | null>(null);
+
+  const generate = useCallback(async () => {
+    if (!requirements.trim()) return;
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    setGenerating(true);
+    setDraftContent('');
+    setTab('preview');
+    try {
+      const res = await fetch('/api/ai-draft', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-role': 'customer',
+          'x-user-paid': hasPaid ? 'true' : 'false',
+        },
+        body: JSON.stringify({ docType, requirements, partiesInfo, additionalContext, userName: user?.name }),
+        signal: abortRef.current.signal,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setDraftContent(`**Error:** ${err.error || 'Failed to generate draft'}`);
+        return;
+      }
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            if (parsed.text) { accumulated += parsed.text; setDraftContent(accumulated); }
+          } catch {}
+        }
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') setDraftContent('**Error:** Draft generation failed. Please try again.');
+    } finally {
+      setGenerating(false);
+    }
+  }, [docType, requirements, partiesInfo, additionalContext, user?.name, hasPaid]);
+
+  const copy = async () => {
+    if (!draftContent) return;
+    await navigator.clipboard.writeText(draftContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const download = () => {
+    if (!draftContent) return;
+    const label = DOCUMENT_TYPES.find(d => d.value === docType)?.label || 'Legal Document';
+    const branded = draftContent + '\n\n' + '─'.repeat(60) + `\nDocument Type: ${label}\nGenerated by Legal24 AI — India's Legal Services Platform\nPowered by Groq with Indian law knowledge base\nlegal24.in\nNote: AI-generated draft. Review with a qualified advocate before use.\n` + '─'.repeat(60);
+    const blob = new Blob([branded], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${label.replace(/\s+/g, '_')}_draft.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-6">
+      {/* Left — inputs */}
+      <div className="space-y-5">
+        <div>
+          <Label className="mb-2 block font-semibold">Document Type</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {DOCUMENT_TYPES.map(dt => (
+              <button
+                key={dt.value}
+                onClick={() => setDocType(dt.value)}
+                className={`p-3 rounded-xl border text-left transition-all ${docType === dt.value ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-300' : 'hover:border-indigo-300 hover:bg-muted/30'}`}
+              >
+                <span className="text-lg">{dt.icon}</span>
+                <p className="text-xs font-semibold mt-1">{dt.label}</p>
+                <p className="text-xs text-muted-foreground">{dt.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label>Requirements / Key Details <span className="text-destructive">*</span></Label>
+          <Textarea className="mt-1" rows={4}
+            placeholder="Describe what you need. E.g.: Notice to landlord for not returning security deposit of ₹50,000 paid on 15 Jan 2024 for flat at Delhi."
+            value={requirements} onChange={e => setRequirements(e.target.value)} />
+        </div>
+
+        <div>
+          <Label>Parties Involved</Label>
+          <Input className="mt-1" placeholder="e.g. Sender: Priya Sharma; Recipient: Rajesh Gupta, landlord"
+            value={partiesInfo} onChange={e => setPartiesInfo(e.target.value)} />
+        </div>
+
+        <div>
+          <Label>Additional Context (optional)</Label>
+          <Textarea className="mt-1" rows={2}
+            placeholder="Any specific laws, dates, amounts, or circumstances to include"
+            value={additionalContext} onChange={e => setAdditionalContext(e.target.value)} />
+        </div>
+
+        <Button onClick={generate} disabled={generating || !requirements.trim()}
+          className="w-full bg-indigo-600 hover:bg-indigo-700">
+          {generating
+            ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating…</>
+            : <><Wand2 className="w-4 h-4 mr-2" /> Generate Document</>}
+        </Button>
+      </div>
+
+      {/* Right — preview */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex gap-1">
+            <button onClick={() => setTab('edit')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${tab === 'edit' ? 'bg-indigo-100 text-indigo-700' : 'text-muted-foreground hover:bg-muted'}`}>
+              <PenTool className="w-3 h-3 inline mr-1" />Edit
+            </button>
+            <button onClick={() => setTab('preview')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${tab === 'preview' ? 'bg-indigo-100 text-indigo-700' : 'text-muted-foreground hover:bg-muted'}`}>
+              <Eye className="w-3 h-3 inline mr-1" />Preview
+            </button>
+          </div>
+          {draftContent && (
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={copy}>
+                {copied ? <CheckCheck className="w-3.5 h-3.5 mr-1 text-green-600" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+                {copied ? 'Copied' : 'Copy'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={download}>
+                <Download className="w-3.5 h-3.5 mr-1" /> Download
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <Card className="p-5 min-h-[500px] bg-white">
+          {!draftContent && !generating && (
+            <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground gap-3">
+              <Sparkles className="w-10 h-10 opacity-20" />
+              <p className="text-sm">Fill in the details and click Generate</p>
+            </div>
+          )}
+          {tab === 'edit' && draftContent && (
+            <Textarea
+              className="w-full min-h-[460px] font-mono text-xs border-0 focus-visible:ring-0 p-0 resize-none"
+              value={draftContent}
+              onChange={e => setDraftContent(e.target.value)}
+            />
+          )}
+          {tab === 'preview' && draftContent && (
+            <div className="prose prose-sm max-w-none text-slate-800">
+              <ReactMarkdown>{draftContent}</ReactMarkdown>
+            </div>
+          )}
+          {generating && !draftContent && (
+            <div className="h-full flex items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+            </div>
+          )}
+        </Card>
+
+        <p className="text-xs text-muted-foreground text-center">
+          AI-generated draft based on Indian law. Review with a qualified advocate before use.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+export default function CustomerAIDraftPage() {
+  const { user, logout } = useAuth();
+  const [hasPaid, setHasPaid] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    // Check if user has any completed payment
+    api.get('/api/payments/')
+      .then((res: any) => {
+        const payments = res?.results ?? res ?? [];
+        const paid = Array.isArray(payments) && payments.some((p: any) => p.status === 'SUCCESS' || p.status === 'completed');
+        setHasPaid(paid);
+      })
+      .catch(() => setHasPaid(false));
+  }, [user]);
+
+  if (!user) return null;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <DashboardHeader user={user} onLogout={logout} />
+      <main className="px-4 md:px-6 lg:px-8 py-6 max-w-6xl mx-auto">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center">
+            <Wand2 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">AI Legal Document Drafter</h1>
+              {hasPaid === true && <Badge className="bg-green-100 text-green-800 border-green-200">Unlocked</Badge>}
+              {hasPaid === false && <Badge className="bg-amber-100 text-amber-800 border-amber-200">Payment Required</Badge>}
+            </div>
+            <p className="text-sm text-muted-foreground">Generate professional Indian legal documents instantly with AI</p>
+          </div>
+        </div>
+
+        {hasPaid === null && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+          </div>
+        )}
+        {hasPaid === false && <PaywallCard />}
+        {hasPaid === true && <DraftingTool hasPaid={true} />}
+      </main>
+    </div>
+  );
+}

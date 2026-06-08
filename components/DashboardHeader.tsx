@@ -40,6 +40,7 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
           { href: '/dashboard/chat', label: 'Messages', icon: MessageSquare },
           { href: '/dashboard/ecourts', label: 'eCourts', icon: Briefcase },
           { href: '/dashboard/customer/ai-chat', label: 'AI Assistant', icon: FileText },
+          { href: '/dashboard/customer/ai-draft', label: 'AI Drafter', icon: Wand2 },
           { href: '/dashboard/drafting', label: 'My Drafts', icon: Briefcase },
           { href: '/dashboard/hearing-updates', label: 'Hearings', icon: Handshake },
           { href: '/dashboard/cheque-bounce', label: 'Cheque Bounce', icon: IndianRupee },
