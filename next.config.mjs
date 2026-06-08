@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Standalone output — copies only the required files so the Docker image
-  // is ~300 MB instead of 2 GB (no node_modules in the final layer)
   output: 'standalone',
 
   typescript: {
