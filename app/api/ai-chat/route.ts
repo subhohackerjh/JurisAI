@@ -7,9 +7,10 @@ import Groq from 'groq-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'gsk_your_key_here') {
+  console.error('[AI Chat] GROQ_API_KEY is not set. Add it to .env');
+}
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
 
 // Best free Groq model for legal reasoning
 const MODEL = 'llama-3.3-70b-versatile';
@@ -50,6 +51,9 @@ End every substantive legal answer with:
 > ⚠️ *This is general legal information, not advice for your specific situation. Consult a qualified advocate for your case.*`;
 
 export async function POST(request: NextRequest) {
+  if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'gsk_your_key_here') {
+    return NextResponse.json({ error: 'AI service not configured. Set GROQ_API_KEY in .env' }, { status: 503 });
+  }
   try {
     // Rate limit: 20 AI chat messages per hour per IP
     const ip = getClientIP(request);

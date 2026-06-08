@@ -12,7 +12,10 @@ import Groq from 'groq-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, getClientIP } from '@/lib/rate-limit';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'gsk_your_key_here') {
+  console.error('[AI Draft] GROQ_API_KEY is not set. Add it to .env');
+}
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
 
 const MODEL = 'llama-3.3-70b-versatile';
 
@@ -128,6 +131,9 @@ const DOC_TYPE_HINTS: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
+  if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'gsk_your_key_here') {
+    return NextResponse.json({ error: 'AI service not configured. Set GROQ_API_KEY in .env' }, { status: 503 });
+  }
   try {
     // Rate limit: 5 document drafts per hour per IP (drafts use 4× more tokens)
     const ip = getClientIP(request);
