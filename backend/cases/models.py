@@ -235,9 +235,11 @@ class DraftRequest(models.Model):
     expected_delivery = models.DateField(blank=True, null=True)
     delivered_date = models.DateField(blank=True, null=True)
     
-    # Documents
+    # Documents — file upload (optional) OR AI-generated text
     draft_document = models.FileField(upload_to='drafts/%Y/%m/', blank=True, null=True)
     final_document = models.FileField(upload_to='drafts/final/%Y/%m/', blank=True, null=True)
+    # AI-generated draft stored as text (advocate can submit this instead of a file)
+    draft_text = models.TextField(blank=True, null=True, help_text='AI-generated or manually written draft text')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

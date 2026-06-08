@@ -330,17 +330,44 @@ export default function DraftingPage() {
                 <p className="text-sm text-muted-foreground">No draft requests yet.</p>
               ) : (
                 <div className="space-y-2">
-                  {drafts.slice(0, 3).map(draft => (
-                    <div key={draft.id} className="p-3 border rounded-lg">
+                  {drafts.map((draft: any) => (
+                    <div key={draft.id} className={`p-3 border rounded-lg ${draft.status === 'completed' ? 'border-green-200 bg-green-50/40' : ''}`}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">{draft.document_type.replace('_', ' ')}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {draft.status}
+                        <span className="text-sm font-medium capitalize">{draft.document_type.replace(/_/g, ' ')}</span>
+                        <Badge variant="outline" className={`text-xs capitalize ${
+                          draft.status === 'completed' ? 'border-green-400 text-green-700' :
+                          draft.status === 'pending' ? 'border-yellow-400 text-yellow-700' :
+                          draft.status === 'in_progress' ? 'border-blue-400 text-blue-700' : ''
+                        }`}>
+                          {draft.status.replace('_', ' ')}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(draft.created_at).toLocaleDateString()}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{new Date(draft.created_at).toLocaleDateString()}</p>
+                      {/* Show completed AI draft text to customer */}
+                      {draft.status === 'completed' && draft.draft_text && (
+                        <div className="mt-2">
+                          <details className="group">
+                            <summary className="text-xs font-medium text-green-700 cursor-pointer flex items-center gap-1">
+                              <Eye className="w-3 h-3" /> View Delivered Document
+                            </summary>
+                            <div className="mt-2 p-3 bg-white rounded-lg border border-green-200 text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
+                              {draft.draft_text}
+                            </div>
+                            <button
+                              className="mt-1 text-xs text-blue-600 hover:underline"
+                              onClick={() => {
+                                const blob = new Blob([draft.draft_text], { type: 'text/plain' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a'); a.href = url;
+                                a.download = `${draft.document_type}_draft.txt`; a.click();
+                                URL.revokeObjectURL(url);
+                              }}
+                            >
+                              ⬇ Download
+                            </button>
+                          </details>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

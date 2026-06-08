@@ -1,0 +1,109 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Legal24 — Local development with Docker Compose
+# Mirrors the production Render setup (Postgres + Redis + Django + Next.js)
+#
+# Usage:
+#   docker compose up --build          # first run
+#   docker compose up                  # subsequent runs
+#   docker compose down -v             # stop and wipe volumes
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: legal24
+
+services:
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: legal24
+      POSTGRES_USER: legal24
+      POSTGRES_PASSWORD: legal24dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U legal24"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Django Backend (Daphne ASGI) ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runtime     # use the final slim stage
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: legalconnect.production_settings
+      SECRET_KEY: dev-secret-key-change-in-production
+      DEBUG: "False"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      BACKEND_URL: "http://localhost:8000"
+      FRONTEND_URL: "http://localhost:3000"
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+      DATABASE_URL: "postgres://legal24:legal24dev@db:5432/legal24"
+      REDIS_URL: "redis://redis:6379"
+      CASHFREE_APP_ID: "${CASHFREE_APP_ID:-}"
+      CASHFREE_SECRET_KEY: "${CASHFREE_SECRET_KEY:-}"
+      CASHFREE_ENV: "sandbox"
+      ECOURTS_API_KEY: "${ECOURTS_API_KEY:-}"
+      PORT: "8000"
+      LOG_LEVEL: "DEBUG"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # Mount media so uploads persist across restarts in dev
+      - backend_media:/app/media
+
+  # ── Next.js Frontend ──────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        NEXT_PUBLIC_API_URL: "http://localhost:8000"
+        NEXT_PUBLIC_WS_URL: "ws://localhost:8000"
+        NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+        NEXT_PUBLIC_CASHFREE_ENV: "sandbox"
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: "http://localhost:8000"
+      NEXT_PUBLIC_WS_URL: "ws://localhost:8000"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      GROQ_API_KEY: "${GROQ_API_KEY:-}"
+      PORT: "3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_media:

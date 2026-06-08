@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Calendar, Clock, MapPin, Gavel, Bell, CheckCircle,
-  AlertCircle, Search, RefreshCw, Eye, Filter
+  AlertCircle, Search, RefreshCw, Eye, Filter, Handshake
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -117,6 +117,43 @@ export default function HearingUpdatesPage() {
             </div>
           </Card>
         </div>
+
+        {/* National Lok Adalat Dates 2025-2026 */}
+        <Card className="p-6 mb-6 border-amber-200 bg-amber-50/40">
+          <h2 className="text-lg font-semibold mb-1 flex items-center gap-2 text-amber-900">
+            <Handshake className="w-5 h-5 text-amber-600" /> National Lok Adalat Dates 2025–2026
+          </h2>
+          <p className="text-xs text-amber-700 mb-4">NALSA organises National Lok Adalats quarterly across all states. Cases are settled permanently — no appeals. Awards are executable as decrees.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { date: '22 Feb 2025', theme: 'All types' },
+              { date: '10 May 2025', theme: 'Motor accident, labour' },
+              { date: '13 Sep 2025', theme: 'Bank recovery, cheques' },
+              { date: '13 Dec 2025', theme: 'All types' },
+              { date: '28 Feb 2026', theme: 'All types' },
+              { date: '9 May 2026', theme: 'Motor accident, labour' },
+              { date: '12 Sep 2026', theme: 'Bank recovery, cheques' },
+              { date: '12 Dec 2026', theme: 'All types' },
+            ].map(({ date, theme }) => {
+              const d = new Date(date);
+              const today = new Date();
+              const past = d < today;
+              return (
+                <div key={date} className={`rounded-xl p-3 border text-center ${past ? 'bg-white/40 opacity-60' : 'bg-white border-amber-200'}`}>
+                  <p className={`text-xs font-bold ${past ? 'text-muted-foreground' : 'text-amber-800'}`}>{date}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{theme}</p>
+                  {!past && (
+                    <p className="text-xs text-green-700 font-semibold mt-1">
+                      {Math.ceil((d.getTime() - today.getTime()) / 86400000)}d away
+                    </p>
+                  )}
+                  {past && <p className="text-xs text-muted-foreground mt-1">Completed</p>}
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-xs text-amber-700 mt-3">Contact NALSA helpline <strong>15100</strong> or your District Legal Services Authority to register your case for Lok Adalat.</p>
+        </Card>
 
         {/* Upcoming Hearings Section */}
         {hearings.length > 0 && (

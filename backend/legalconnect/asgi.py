@@ -1,10 +1,23 @@
 """
-ASGI config for legalconnect project.
+ASGI config for legalconnect project — supports both HTTP and WebSocket.
 """
 import os
-
-from django.core.asgi import get_asgi_application
+import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'legalconnect.settings')
+django.setup()
 
-application = get_asgi_application()
+from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
+from messaging.middleware import JWTAuthMiddlewareStack
+from messaging.routing import websocket_urlpatterns
+
+application = ProtocolTypeRouter({
+    'http': get_asgi_application(),
+    'websocket': AllowedHostsOriginValidator(
+        JWTAuthMiddlewareStack(
+            URLRouter(websocket_urlpatterns)
+        )
+    ),
+})

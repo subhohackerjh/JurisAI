@@ -9,33 +9,40 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production')
-DEBUG = config('DEBUG', default=True, cast=bool)
+# SECRET_KEY must be set in environment — no insecure fallback
+# In dev: add SECRET_KEY=any-local-dev-key to your .env
+SECRET_KEY = config('SECRET_KEY', default='dev-only-key-change-me-not-for-production')
+# Default to False — safer; explicitly set DEBUG=True in local .env for development
+DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 # Change this in production! e.g. ADMIN_URL=super-secret-path-xyz123
 ADMIN_URL = config('ADMIN_URL', default='admin')
 
 # Application definition
 INSTALLED_APPS = [
+    'daphne',  # must be before staticfiles
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Third party
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
-    
+    'channels',
+
     # Local apps
     'accounts',
     'cases',
     'feedback',
     'ecourts',
     'messaging',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -69,6 +76,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'legalconnect.wsgi.application'
+ASGI_APPLICATION = 'legalconnect.asgi.application'
+
+# Django Channels — InMemoryChannelLayer (swap to RedisChannelLayer in production)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
 
 # Database
 DATABASES = {
@@ -195,6 +210,14 @@ CORS_ALLOW_HEADERS = [
 # eCourts API Configuration
 ECOURTS_API_KEY = config('ECOURTS_API_KEY', default='')
 ECOURTS_BASE_URL = config('ECOURTS_BASE_URL', default='https://api.ecourts.gov.in')
+
+# Cashfree Payment Gateway
+CASHFREE_APP_ID = config('CASHFREE_APP_ID', default='')
+CASHFREE_SECRET_KEY = config('CASHFREE_SECRET_KEY', default='')
+CASHFREE_ENV = config('CASHFREE_ENV', default='sandbox')  # 'sandbox' or 'production'
+
+# Anthropic AI
+ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')
 
 # Production Security Settings (only active when DEBUG=False)
 if not DEBUG:

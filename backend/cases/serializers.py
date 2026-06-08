@@ -192,16 +192,19 @@ class CaseStatusUpdateSerializer(serializers.ModelSerializer):
 
 class DraftRequestListSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer.name', read_only=True)
+    customer = UserSerializer(read_only=True)
     advocate_name = serializers.CharField(source='advocate.name', read_only=True)
     document_type_display = serializers.CharField(source='get_document_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    
+
     class Meta:
         model = DraftRequest
         fields = [
             'id', 'document_type', 'document_type_display', 'status', 'status_display',
             'customer', 'customer_name', 'advocate', 'advocate_name',
-            'agreed_price', 'expected_delivery', 'delivered_date', 'created_at'
+            'requirements', 'additional_notes',
+            'agreed_price', 'expected_delivery', 'delivered_date',
+            'draft_text', 'created_at',
         ]
 
 
@@ -210,15 +213,15 @@ class DraftRequestDetailSerializer(serializers.ModelSerializer):
     advocate = UserSerializer(read_only=True)
     document_type_display = serializers.CharField(source='get_document_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    
+
     class Meta:
         model = DraftRequest
         fields = [
             'id', 'document_type', 'document_type_display', 'requirements',
             'additional_notes', 'status', 'status_display',
             'customer', 'advocate', 'agreed_price', 'expected_delivery',
-            'delivered_date', 'draft_document', 'final_document',
-            'created_at', 'updated_at'
+            'delivered_date', 'draft_document', 'final_document', 'draft_text',
+            'created_at', 'updated_at',
         ]
 
 
@@ -226,7 +229,7 @@ class DraftRequestCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = DraftRequest
         fields = ['advocate', 'document_type', 'requirements', 'additional_notes']
-    
+
     def create(self, validated_data):
         validated_data['customer'] = self.context['request'].user
         validated_data['status'] = 'pending'
@@ -236,4 +239,7 @@ class DraftRequestCreateSerializer(serializers.ModelSerializer):
 class DraftRequestUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = DraftRequest
-        fields = ['status', 'agreed_price', 'expected_delivery', 'draft_document', 'final_document']
+        fields = [
+            'status', 'agreed_price', 'expected_delivery',
+            'draft_document', 'final_document', 'draft_text',
+        ]

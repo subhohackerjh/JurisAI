@@ -1,0 +1,143 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Legal24 — Render Blueprint
+# Deploys: PostgreSQL · Redis · Django backend · Next.js frontend
+#
+# HOW TO USE:
+#   1. Push this repo to GitHub
+#   2. Go to dashboard.render.com → New → Blueprint
+#   3. Connect your repo — Render reads this file automatically
+#   4. Fill in the secret env vars marked  ← SET THIS
+#   5. Click "Apply" — all 4 services spin up in order
+# ─────────────────────────────────────────────────────────────────────────────
+
+databases:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  - name: legal24-db
+    databaseName: legal24
+    user: legal24
+    plan: free            # upgrade to starter ($7/mo) for persistent storage
+    region: singapore     # change to match your users
+
+services:
+  # ── Redis (for WebSocket channel layer + caching) ───────────────────────────
+  - type: redis
+    name: legal24-redis
+    plan: free
+    region: singapore
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []       # only allow internal Render network
+
+  # ── Django Backend (Daphne ASGI — HTTP + WebSocket) ─────────────────────────
+  - type: web
+    name: legal24-api
+    region: singapore
+    plan: free            # upgrade to starter ($7/mo) for always-on
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+
+    # Health-check — returns {status: ok, db: true}
+    healthCheckPath: /health/
+
+    envVars:
+      # Django config
+      - key: DJANGO_SETTINGS_MODULE
+        value: legalconnect.production_settings
+
+      - key: SECRET_KEY
+        generateValue: true           # Render auto-generates a secure random key
+
+      - key: ALLOWED_HOSTS
+        value: legal24-api.onrender.com
+
+      - key: BACKEND_URL
+        value: https://legal24-api.onrender.com
+
+      - key: FRONTEND_URL
+        value: https://legal24.onrender.com
+
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://legal24.onrender.com
+
+      # Database — Render injects DATABASE_URL automatically when linked
+      - key: DATABASE_URL
+        fromDatabase:
+          name: legal24-db
+          property: connectionString
+
+      # Redis — Render injects REDIS_URL automatically when linked
+      - key: REDIS_URL
+        fromService:
+          name: legal24-redis
+          type: redis
+          property: connectionString
+
+      # Cashfree Payments
+      - key: CASHFREE_APP_ID
+        sync: false       # ← SET THIS in Render dashboard
+
+      - key: CASHFREE_SECRET_KEY
+        sync: false       # ← SET THIS in Render dashboard
+
+      - key: CASHFREE_ENV
+        value: production
+
+      # eCourts API
+      - key: ECOURTS_API_KEY
+        sync: false       # ← SET THIS in Render dashboard
+
+      # Email (optional — for notifications)
+      - key: EMAIL_HOST_USER
+        sync: false       # ← SET THIS
+
+      - key: EMAIL_HOST_PASSWORD
+        sync: false       # ← SET THIS
+
+      - key: DEFAULT_FROM_EMAIL
+        value: noreply@legal24.in
+
+      # Sentry error tracking (optional)
+      - key: SENTRY_DSN
+        sync: false       # ← SET THIS if you use Sentry
+
+      # Python
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+      - key: LOG_LEVEL
+        value: INFO
+
+  # ── Next.js Frontend ─────────────────────────────────────────────────────────
+  - type: web
+    name: legal24
+    region: singapore
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Pass build-time ARGs so the JS bundle gets the correct API URLs baked in
+    buildCommand: ""   # Docker handles the build
+
+    # Runtime env vars (available to server-side code / API routes)
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://legal24-api.onrender.com
+
+      - key: NEXT_PUBLIC_WS_URL
+        value: wss://legal24-api.onrender.com
+
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://legal24.onrender.com
+
+      - key: NEXT_PUBLIC_CASHFREE_ENV
+        value: production
+
+      # Groq AI — free tier key from console.groq.com
+      # Server-side only — never exposed to browser
+      - key: GROQ_API_KEY
+        sync: false       # ← SET THIS in Render dashboard
+
+      - key: NODE_ENV
+        value: production
+
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"

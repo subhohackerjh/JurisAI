@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,12 +14,14 @@ import { casesApi } from '@/lib/api';
 import DashboardHeader from '@/components/DashboardHeader';
 import {
   FileText, ArrowLeft, Calendar, Clock, Upload,
-  Trash2, Eye, CheckCircle, AlertCircle, Gavel
+  Trash2, Eye, CheckCircle, AlertCircle, Gavel, Star
 } from 'lucide-react';
 
 export default function CaseDetailPage() {
   const { id } = useParams();
+  const router = useRouter();
   const { session, logout } = useAuth();
+  const user = session?.user;
   const [caseData, setCaseData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -203,6 +205,15 @@ export default function CaseDetailPage() {
                   {caseData.advocate.bar_council_id && <div><p className="text-muted-foreground text-xs">Bar Council ID</p><p className="font-medium">{caseData.advocate.bar_council_id}</p></div>}
                   {caseData.advocate_fee && <div><p className="text-muted-foreground text-xs">Agreed Fee</p><p className="font-medium">₹{Number(caseData.advocate_fee).toLocaleString()}</p></div>}
                 </CardContent>
+                {/* Rate advocate button — show for customer on closed cases */}
+                {user?.role === 'customer' && ['closed', 'dismissed'].includes(caseData.status) && (
+                  <CardContent className="pt-0">
+                    <Button size="sm" variant="outline" className="w-full border-amber-300 text-amber-700 hover:bg-amber-50"
+                      onClick={() => router.push(`/dashboard/rate-advocate?advocate_id=${caseData.advocate.id}&case_id=${caseData.id}`)}>
+                      <Star className="w-3.5 h-3.5 mr-1.5 fill-amber-400 text-amber-400" /> Rate This Advocate
+                    </Button>
+                  </CardContent>
+                )}
               </Card>
             )}
 

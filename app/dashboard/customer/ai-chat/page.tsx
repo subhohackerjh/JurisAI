@@ -1,348 +1,398 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Bot, 
-  Send, 
-  User, 
-  MessageCircle, 
-  Clock, 
-  FileText, 
-  AlertCircle,
-  CheckCircle,
-  ThumbsUp,
-  ThumbsDown,
-  Lightbulb,
-  BookOpen,
-  Scale,
-  Gavel
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Bot, Send, User, FileText, AlertCircle,
+  Lightbulb, BookOpen, Scale, Gavel, Loader2,
+  RefreshCw, Copy, CheckCheck, Sparkles
 } from 'lucide-react';
-import { AIChatMessage } from '@/lib/types';
+import ReactMarkdown from 'react-markdown';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  isStreaming?: boolean;
+}
+
+const QUICK_PROMPTS = [
+  { icon: FileText, label: 'Divorce Process', prompt: 'Explain the divorce process in India step by step, including timeline and documents required.' },
+  { icon: Scale,    label: 'Property Dispute', prompt: 'What are my legal options if someone has illegally occupied my property?' },
+  { icon: BookOpen, label: 'Labour Rights', prompt: 'What are my rights as an employee if I am unfairly terminated?' },
+  { icon: Gavel,    label: 'File an FIR', prompt: 'How do I file an FIR and what happens after it is filed?' },
+  { icon: AlertCircle, label: 'Section 498A', prompt: 'Explain IPC Section 498A (cruelty by husband/relatives) — what constitutes an offence and how to file a complaint.' },
+  { icon: Lightbulb, label: 'eCourts Filing', prompt: 'How do I file a case online using the eCourts portal in India?' },
+];
 
 export default function AIChatPage() {
-  const { user } = useAuth();
-  const router = useRouter();
-  const [messages, setMessages] = useState<AIChatMessage[]>([
+  const { user, logout } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      sender: 'ai',
-      content: 'Hello! I\'m your LEGAL 24 AI assistant. I\'m here to help you with legal queries, provide information about legal procedures, and guide you through your legal concerns. How can I assist you today?',
-      timestamp: new Date().toISOString(),
-      category: 'general'
-    }
-  ]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+      id: 'welcome',
+      role: 'assistant',
+      content: `**Welcome to LEGAL 24 AI Assistant!** 👋
 
-  const scrollToBottom = () => {
+I'm powered by Claude AI and trained on Indian law. I can help you with:
+
+- 📋 **Legal procedures** — how to file cases, FIRs, complaints
+- ⚖️ **Your rights** — under IPC, Constitution, Consumer law, Labour law
+- 🏠 **Property & family matters** — disputes, divorce, inheritance
+- 📱 **eCourts system** — online filing, case tracking, e-services
+- 📄 **Document guidance** — what documents you need for legal processes
+
+Ask me anything about Indian law. How can I help you today?`,
+      timestamp: new Date().toISOString(),
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim() || isLoading) return;
 
-    const userMessage: AIChatMessage = {
+    const userMessage: Message = {
       id: Date.now().toString(),
-      sender: 'user',
-      content: inputMessage,
-      timestamp: new Date().toISOString()
+      role: 'user',
+      content: content.trim(),
+      timestamp: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsTyping(true);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(inputMessage);
-      const aiMessage: AIChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: 'ai',
-        content: aiResponse.content,
-        timestamp: new Date().toISOString(),
-        category: aiResponse.category,
-        suggestedActions: aiResponse.suggestedActions
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-      setIsTyping(false);
-    }, 1500);
-  };
-
-  const generateAIResponse = (userMessage: string) => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    // Legal advice responses
-    if (lowerMessage.includes('divorce') || lowerMessage.includes('separation')) {
-      return {
-        content: 'Divorce proceedings in India are governed by the Hindu Marriage Act, 1955, and the Special Marriage Act, 1954. The process typically involves:\n\n1. **Filing a petition** - Either mutual consent or contested\n2. **Cooling period** - 6 months for mutual consent cases\n3. **Counseling** - Mandatory counseling session\n4. **Final decree** - Court decision\n\nWould you like me to explain any specific aspect of the divorce process?',
-        category: 'legal_advice',
-        suggestedActions: ['File Divorce Petition', 'Know Your Rights', 'Find Divorce Lawyers']
-      };
-    }
-
-    if (lowerMessage.includes('property') || lowerMessage.includes('land dispute')) {
-      return {
-        content: 'Property disputes in India can involve:\n\n🏠 **Title Issues** - Ownership verification\n⚖️ **Boundary Disputes** - Property line disagreements\n📋 **Illegal Possession** - Unauthorized occupation\n\n**Key Steps:**\n1. Gather all property documents\n2. File civil suit in appropriate court\n3. Consider mediation for faster resolution\n4. Register property with authorities\n\n**Important:** Always keep original documents safe and maintain proper records.',
-        category: 'legal_advice',
-        suggestedActions: ['Verify Property Documents', 'File Civil Suit', 'Consider Mediation']
-      };
-    }
-
-    if (lowerMessage.includes('labor') || lowerMessage.includes('employment')) {
-      return {
-        content: 'Labor law protections in India include:\n\n💼 **Working Hours** - 8 hours/day, 48 hours/week\n⏰ **Overtime** - Must be paid at double rate\n🏥 **Minimum Wage** - Varies by state\n🏖️ **Leave** - 12 days earned leave + public holidays\n\n**For Employment Issues:**\n1. Document everything\n2. Send formal complaint to HR\n3. File complaint with Labor Commissioner\n4. Consider legal action if unresolved\n\nNeed help with a specific employment issue?',
-        category: 'legal_advice',
-        suggestedActions: ['Know Labor Rights', 'File Workplace Complaint', 'Consult Labor Lawyer']
-      };
-    }
-
-    if (lowerMessage.includes('criminal') || lowerMessage.includes('fir')) {
-      return {
-        content: 'For criminal matters in India:\n\n🚨 **FIR (First Information Report)**\n- Must be filed at the nearest police station\n- Can be filed by victim or informant\n- Keep a copy for your records\n\n⚖️ **Legal Process:**\n1. Investigation by police\n2. Chargesheet filing\n3. Court proceedings\n4. Bail application (if applicable)\n\n**Important Rights:**\n- Right to remain silent\n- Right to legal counsel\n- Right to be informed of charges\n\nWould you like guidance on filing an FIR or understanding the criminal process?',
-        category: 'legal_advice',
-        suggestedActions: ['File FIR Online', 'Find Criminal Lawyer', 'Know Your Rights']
-      };
-    }
-
-    // General legal information
-    if (lowerMessage.includes('court') || lowerMessage.includes('legal procedure')) {
-      return {
-        content: 'Indian Court System Structure:\n\n🏛️ **Supreme Court** - Final appellate authority\n🏛️ **High Courts** - State-level courts\n⚖️ **District Courts** - Trial courts\n🏛️ **Specialized Tribunals** - NCLT, NGT, etc.\n\n**E-Court Services:**\n- Case filing online\n- Virtual hearings\n- E-filing of documents\n- Case status tracking\n\n**Benefits of E-Courts:**\n✅ Save time and travel\n✅ Transparent process\n✅ Easy document access\n\nNeed help with a specific court procedure?',
-        category: 'procedure',
-        suggestedActions: ['File Case Online', 'Check Case Status', 'Find Court Lawyers']
-      };
-    }
-
-    // Document help
-    if (lowerMessage.includes('document') || lowerMessage.includes('draft')) {
-      return {
-        content: 'Common Legal Documents Required:\n\n📋 **Identity Documents:**\n- Aadhaar Card\n- PAN Card\n- Voter ID\n- Passport\n\n📄 **Property Documents:**\n- Sale Deed\n- Title Deed\n- Encumbrance Certificate\n- Tax Receipts\n\n📝 **Legal Agreements:**\n- Rental/Lease Agreements\n- Employment Contracts\n- Partnership Deeds\n- Loan Agreements\n\n**Tips:**\n- Always self-attest documents\n- Keep both originals and copies\n- Use registered e-stamps where required\n\nWhich type of document do you need help with?',
-        category: 'document_help',
-        suggestedActions: ['Draft Legal Document', 'Find Document Templates', 'Get Notary Services']
-      };
-    }
-
-    // Default response
-    return {
-      content: `I understand you're asking about "${userMessage}". While I can provide general legal information and guidance, please note:\n\n⚠️ **Important Disclaimer:**\nI am an AI assistant and cannot provide specific legal advice for your situation. For personalized legal advice, please consult with a qualified advocate.\n\n🤖 **How I Can Help:**\n- Explain legal procedures\n- Provide information about laws\n- Suggest next steps\n- Help with document requirements\n- General legal guidance\n\nCould you please provide more details about your specific legal concern so I can assist you better?`,
-      category: 'general',
-      suggestedActions: ['Find Qualified Lawyer', 'Schedule Consultation', 'Legal Aid Resources']
+    const assistantId = (Date.now() + 1).toString();
+    const assistantMessage: Message = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+      isStreaming: true,
     };
+
+    setMessages(prev => [...prev, userMessage, assistantMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    // Build conversation history (exclude the empty streaming message)
+    const history = [...messages, userMessage].map(m => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    abortRef.current = new AbortController();
+
+    try {
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: history,
+          context: { userRole: user?.role },
+        }),
+        signal: abortRef.current.signal,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to get response');
+      }
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (!data.trim()) continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.text) {
+              accumulated += parsed.text;
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId
+                    ? { ...m, content: accumulated, isStreaming: true }
+                    : m
+                )
+              );
+            } else if (parsed.done) {
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId ? { ...m, isStreaming: false } : m
+                )
+              );
+            } else if (parsed.error) {
+              throw new Error(parsed.error);
+            }
+          } catch (parseErr) {
+            // skip malformed chunks
+          }
+        }
+      }
+    } catch (err: any) {
+      if (err.name === 'AbortError') return;
+
+      const errorText = err.message || 'Something went wrong. Please try again.';
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantId
+            ? { ...m, content: `⚠️ **Error:** ${errorText}`, isStreaming: false }
+            : m
+        )
+      );
+    } finally {
+      setIsLoading(false);
+      abortRef.current = null;
+    }
+  }, [messages, isLoading, user?.role]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(input);
   };
 
-  const handleQuickAction = (action: string) => {
-    setInputMessage(`Tell me more about ${action}`);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
+  };
+
+  const copyMessage = async (id: string, content: string) => {
+    await navigator.clipboard.writeText(content);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const resetChat = () => {
+    abortRef.current?.abort();
+    setMessages([{
+      id: 'welcome',
+      role: 'assistant',
+      content: `**New conversation started.** Ask me anything about Indian law!`,
+      timestamp: new Date().toISOString(),
+    }]);
+    setIsLoading(false);
   };
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen">
-      <DashboardHeader user={user} onLogout={() => {}} />
-      <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 max-w-6xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center shadow-inner relative shrink-0">
-            <Bot className="h-6 w-6 text-white" />
-            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full" />
+    <div className="min-h-screen bg-background">
+      <DashboardHeader user={user} onLogout={logout} />
+
+      <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-6 max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative shrink-0">
+              <Bot className="h-6 w-6 text-white" />
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-400 border-2 border-white rounded-full" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                AI Legal Assistant
+                <Badge className="bg-orange-100 text-orange-700 text-xs">Powered by Groq · Free</Badge>
+              </h1>
+              <p className="text-sm text-muted-foreground">Real-time Indian law guidance</p>
+            </div>
           </div>
-          <div>
-            <h1 className="legal-page-title">AI Legal Assistant</h1>
-            <p className="legal-page-subtitle">Get instant answers to your legal questions</p>
-          </div>
+          <Button variant="ghost" size="sm" onClick={resetChat} title="New conversation">
+            <RefreshCw className="w-4 h-4 mr-1" /> New Chat
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chat Area */}
-          <div className="lg:col-span-2 space-y-4">
-            <Card className="h-[600px] flex flex-col">
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <Bot className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold">Legal AI Chat</h3>
-                  {isTyping && (
-                    <div className="flex items-center gap-2 ml-auto">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-muted-foreground">AI is typing...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
+          {/* Main chat */}
+          <div className="lg:col-span-2">
+            <Card className="flex flex-col h-[620px]">
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map(message => (
-                  <div key={message.id} className={`flex gap-3 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] ${message.sender === 'user' ? 'order-2' : 'order-1'}`}>
-                      <div className={`flex items-start gap-2 p-3 rounded-lg ${
-                        message.sender === 'user' 
-                          ? 'bg-indigo-600 text-white' 
-                          : 'bg-slate-100 text-slate-800'
-                      }`}>
-                        {message.sender === 'ai' && (
-                          <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Bot className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                        {message.sender === 'user' && (
-                          <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
-                            <User className="w-3 h-3 text-primary-foreground" />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <p className="text-sm leading-relaxed">{message.content}</p>
-                          {message.category && (
-                            <Badge variant="secondary" className="text-xs mt-2">
-                              {message.category.replace('_', ' ').toUpperCase()}
-                            </Badge>
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {messages.map(message => (
+                    <div
+                      key={message.id}
+                      className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      {message.role === 'assistant' && (
+                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center shrink-0 mt-1">
+                          <Bot className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+
+                      <div className={`max-w-[85%] group ${message.role === 'user' ? 'order-first' : ''}`}>
+                        <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                          message.role === 'user'
+                            ? 'bg-indigo-600 text-white rounded-br-sm'
+                            : 'bg-muted rounded-bl-sm'
+                        }`}>
+                          {message.role === 'assistant' ? (
+                            <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-p:leading-relaxed">
+                              <ReactMarkdown>{message.content}</ReactMarkdown>
+                              {message.isStreaming && (
+                                <span className="inline-block w-2 h-4 bg-indigo-500 animate-pulse ml-0.5 rounded-sm" />
+                              )}
+                            </div>
+                          ) : (
+                            <p className="whitespace-pre-wrap">{message.content}</p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-1 px-1">
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {message.role === 'assistant' && !message.isStreaming && message.content && (
+                            <button
+                              onClick={() => copyMessage(message.id, message.content)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                            >
+                              {copiedId === message.id
+                                ? <CheckCheck className="w-3.5 h-3.5 text-green-500" />
+                                : <Copy className="w-3.5 h-3.5" />}
+                            </button>
                           )}
                         </div>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {new Date(message.timestamp).toLocaleTimeString()}
+
+                      {message.role === 'user' && (
+                        <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center shrink-0 mt-1">
+                          <User className="w-4 h-4 text-indigo-600" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center shrink-0">
+                        <Bot className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="bg-muted px-4 py-3 rounded-2xl rounded-bl-sm">
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                       </div>
                     </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
+                  )}
 
-              {/* Suggested Actions */}
-              {messages[messages.length - 1]?.sender === 'ai' && messages[messages.length - 1]?.suggestedActions && (
-                <div className="p-4 border-t border-border">
-                  <p className="text-sm font-medium mb-3">Suggested Actions:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {messages[messages.length - 1].suggestedActions?.map((action, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleQuickAction(action)}
-                        className="text-xs"
-                      >
-                        {action}
-                      </Button>
-                    ))}
-                  </div>
+                  <div ref={messagesEndRef} />
                 </div>
-              )}
+              </ScrollArea>
 
-              {/* Input Area */}
-              <div className="p-4 border-t border-border">
-                <div className="flex gap-2">
+              {/* Input */}
+              <div className="border-t p-4">
+                <form onSubmit={handleSubmit} className="flex gap-2">
                   <Textarea
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Ask your legal question..."
+                    ref={textareaRef}
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask your legal question… (Shift+Enter for new line)"
                     rows={2}
-                    className="flex-1 resize-none"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
+                    className="flex-1 resize-none text-sm"
+                    disabled={isLoading}
                   />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || isTyping}
-                    size="sm"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={!input.trim() || isLoading}
+                      className="h-full bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      {isLoading
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Send className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </form>
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  General legal information only — not a substitute for professional legal advice
+                </p>
               </div>
             </Card>
           </div>
 
-          {/* Quick Actions & Info */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleQuickAction('divorce process')}
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Divorce Procedures
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleQuickAction('property disputes')}
-                >
-                  <Scale className="w-4 h-4 mr-2" />
-                  Property Issues
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleQuickAction('employment rights')}
-                >
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  Labor Laws
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => handleQuickAction('filing FIR')}
-                >
-                  <Gavel className="w-4 h-4 mr-2" />
-                  Criminal Cases
-                </Button>
+          {/* Sidebar */}
+          <div className="space-y-4">
+            {/* Quick prompts */}
+            <Card className="p-4">
+              <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-500" />
+                Quick Questions
+              </h3>
+              <div className="space-y-2">
+                {QUICK_PROMPTS.map((qp, i) => (
+                  <button
+                    key={i}
+                    onClick={() => sendMessage(qp.prompt)}
+                    disabled={isLoading}
+                    className="w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted transition-colors disabled:opacity-50"
+                  >
+                    <qp.icon className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <span>{qp.label}</span>
+                  </button>
+                ))}
               </div>
             </Card>
 
-            {/* Legal Categories */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Legal Topics</h3>
-              <div className="space-y-2">
+            {/* Legal topics */}
+            <Card className="p-4">
+              <h3 className="font-semibold text-sm mb-3">Topics I Cover</h3>
+              <div className="flex flex-wrap gap-2">
                 {[
-                  { icon: FileText, title: 'Family Law', desc: 'Divorce, custody, marriage' },
-                  { icon: Scale, title: 'Property Law', desc: 'Disputes, registration, deeds' },
-                  { icon: BookOpen, title: 'Criminal Law', desc: 'FIR, bail, court procedures' },
-                  { icon: AlertCircle, title: 'Labor Law', desc: 'Rights, termination, wages' },
-                  { icon: Lightbulb, title: 'Civil Law', desc: 'Contracts, torts, compensation' }
-                ].map((topic, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-                    <topic.icon className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium text-sm">{topic.title}</p>
-                      <p className="text-xs text-muted-foreground">{topic.desc}</p>
-                    </div>
-                  </div>
+                  'IPC / BNS', 'CrPC / BNSS', 'Family Law', 'Property',
+                  'Consumer Law', 'Labour Law', 'RTI', 'eCourts',
+                  'Bail & Custody', 'FIR Filing', 'Constitution', 'IBC',
+                ].map(tag => (
+                  <Badge key={tag} variant="secondary" className="text-xs cursor-pointer hover:bg-indigo-100"
+                    onClick={() => sendMessage(`Explain ${tag} in simple terms`)}>
+                    {tag}
+                  </Badge>
                 ))}
               </div>
             </Card>
 
             {/* Disclaimer */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-500" />
-                Important Disclaimer
+            <Card className="p-4 border-amber-200 bg-amber-50">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2 text-amber-800">
+                <AlertCircle className="w-4 h-4" /> Disclaimer
               </h3>
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <p>• This AI provides general legal information only</p>
-                <p>• Not a substitute for professional legal advice</p>
-                <p>• Consult qualified advocates for specific cases</p>
-                <p>• Laws vary by jurisdiction and circumstances</p>
-              </div>
-              <Button className="w-full mt-4">
+              <ul className="text-xs text-amber-700 space-y-1">
+                <li>• AI provides general legal information</li>
+                <li>• Not a substitute for professional advice</li>
+                <li>• Laws vary by state & circumstances</li>
+                <li>• Consult a qualified advocate for your case</li>
+              </ul>
+              <Button
+                size="sm"
+                className="w-full mt-3 bg-amber-600 hover:bg-amber-700 text-white"
+                onClick={() => window.location.href = '/dashboard/advocates'}
+              >
                 Find Qualified Advocates
               </Button>
             </Card>

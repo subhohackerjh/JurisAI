@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, Suspense } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import DashboardHeader from '@/components/DashboardHeader';
@@ -11,8 +11,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Send, Loader, ArrowLeft, MessageSquare, User, Gavel, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
+import { Send, Loader, ArrowLeft, MessageSquare, User, Gavel, CheckCircle, XCircle, Clock, ExternalLink, Wifi, WifiOff } from 'lucide-react';
 import { messagingApi } from '@/lib/messaging-api';
+
+const WS_BASE = (process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000').replace(/\/$/, '');
 
 // ─── Conversation View ────────────────────────────────────────────────────────
 function ConversationView({ conversationId, currentUser, onBack }: {
@@ -22,11 +24,18 @@ function ConversationView({ conversationId, currentUser, onBack }: {
 }) {
   const router = useRouter();
   const [conversation, setConversation] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [typingUser, setTypingUser] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0);
 
   // Case Request Form (customer)
   const [showRequestForm, setShowRequestForm] = useState(false);
@@ -42,83 +51,144 @@ function ConversationView({ conversationId, currentUser, onBack }: {
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 
-  // Track last known message count so we only scroll on NEW messages
-  const lastMsgCountRef = useRef(0);
-  const pollingRef = useRef<NodeJS.Timeout | null>(null);
-  const isPollingRef = useRef(false); // prevent overlapping polls
-
-  const loadConversation = async (silent = false) => {
-    // silent=true means background poll — don't show loading spinner
-    if (!silent) setLoading(true);
+  // Load initial conversation data via REST
+  const loadConversation = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await messagingApi.getConversation(conversationId);
       if (res.data) {
         const conv = res.data as any;
-        setConversation((prev: any) => {
-          // Only update if something changed (avoid unnecessary re-renders)
-          const prevCount = prev?.messages?.length ?? 0;
-          const newCount = conv.messages?.length ?? 0;
-          if (silent && prevCount === newCount && prev?.status === conv.status) return prev;
-          return conv;
-        });
-        // Mark messages read on initial load only
-        if (!silent) await messagingApi.markMessagesRead(conversationId);
-      } else if (!silent) {
+        setConversation(conv);
+        setMessages(conv.messages || []);
+        await messagingApi.markMessagesRead(conversationId);
+      } else {
         setError(res.error || 'Conversation not found');
       }
     } catch {
-      if (!silent) setError('Failed to load conversation');
+      setError('Failed to load conversation');
     } finally {
-      if (!silent) setLoading(false);
+      setLoading(false);
     }
-  };
-
-  // Initial load
-  useEffect(() => {
-    loadConversation(false);
   }, [conversationId]);
 
-  // Auto-scroll when new messages arrive
-  useEffect(() => {
-    const count = conversation?.messages?.length ?? 0;
-    if (count > lastMsgCountRef.current) {
-      scrollToBottom();
-      lastMsgCountRef.current = count;
-    }
-  }, [conversation?.messages?.length]);
+  // Connect WebSocket
+  const connectWS = useCallback(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
 
-  // Polling — every 3 seconds while tab is visible
-  useEffect(() => {
-    const poll = async () => {
-      if (isPollingRef.current) return; // skip if previous poll still running
-      if (document.visibilityState === 'hidden') return;
-      isPollingRef.current = true;
-      await loadConversation(true);
-      isPollingRef.current = false;
+    const url = `${WS_BASE}/ws/chat/${conversationId}/?token=${token}`;
+    const ws = new WebSocket(url);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      setWsConnected(true);
+      reconnectAttemptsRef.current = 0;
     };
 
-    pollingRef.current = setInterval(poll, 3000);
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
 
-    // Pause polling when tab is hidden, resume when visible
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') poll();
+        if (data.type === 'message') {
+          setMessages(prev => {
+            // Avoid duplicates
+            if (prev.find(m => m.id === data.id)) return prev;
+            return [...prev, {
+              id: data.id,
+              content: data.content,
+              sender: {
+                id: data.sender_id,
+                name: data.sender_name,
+                role: data.sender_role,
+              },
+              timestamp: data.timestamp,
+              is_read: data.is_read,
+            }];
+          });
+          scrollToBottom();
+          // Mark as read if not from me
+          if (data.sender_id !== String(currentUser?.id)) {
+            ws.send(JSON.stringify({ type: 'read' }));
+          }
+        } else if (data.type === 'typing') {
+          if (data.sender_id !== String(currentUser?.id)) {
+            setTypingUser(data.is_typing ? data.sender_name : null);
+          }
+        } else if (data.type === 'read') {
+          setMessages(prev => prev.map(m =>
+            String(m.sender?.id) === String(currentUser?.id) ? { ...m, is_read: true } : m
+          ));
+        } else if (data.type === 'conversation_updated') {
+          setConversation((prev: any) => prev ? { ...prev, status: data.status, case_id: data.case_id ?? prev.case_id } : prev);
+        }
+      } catch {}
     };
-    document.addEventListener('visibilitychange', handleVisibility);
 
+    ws.onclose = (e) => {
+      setWsConnected(false);
+      wsRef.current = null;
+      // Exponential back-off reconnect (max 30s)
+      if (e.code !== 4001 && e.code !== 4003) {
+        const delay = Math.min(1000 * 2 ** reconnectAttemptsRef.current, 30000);
+        reconnectAttemptsRef.current++;
+        reconnectTimerRef.current = setTimeout(connectWS, delay);
+      }
+    };
+
+    ws.onerror = () => ws.close();
+  }, [conversationId, currentUser?.id]);
+
+  useEffect(() => {
+    loadConversation();
+  }, [conversationId]);
+
+  useEffect(() => {
+    connectWS();
     return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-      document.removeEventListener('visibilitychange', handleVisibility);
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      wsRef.current?.close(1000);
     };
   }, [conversationId]);
+
+  useEffect(() => { scrollToBottom(); }, [messages.length]);
+
+  // Send typing indicator
+  const sendTyping = useCallback((isTyping: boolean) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'typing', is_typing: isTyping }));
+    }
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    sendTyping(true);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => sendTyping(false), 2000);
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || sending) return;
-    setSending(true);
-    try {
-      const res = await messagingApi.sendMessage(conversationId, { content: input.trim() });
-      if (res.data) { setInput(''); await loadConversation(false); }
-    } finally { setSending(false); }
+    const content = input.trim();
+    setInput('');
+    sendTyping(false);
+
+    // Send via WebSocket if connected, else fall back to REST
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'message', content }));
+    } else {
+      setSending(true);
+      try {
+        const res = await messagingApi.sendMessage(conversationId, { content });
+        if (res.data) {
+          setMessages(prev => {
+            const msg = res.data as any;
+            if (prev.find(m => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
+        }
+      } finally { setSending(false); }
+    }
   };
 
   // Customer: submit case request
@@ -135,7 +205,7 @@ function ConversationView({ conversationId, currentUser, onBack }: {
         court_name: caseForm.court_name || undefined,
       });
       if (res.error) { setRequestError(res.error); }
-      else { setShowRequestForm(false); await loadConversation(false); }
+      else { setShowRequestForm(false); await loadConversation(); }
     } finally { setIsRequesting(false); }
   };
 
@@ -144,7 +214,7 @@ function ConversationView({ conversationId, currentUser, onBack }: {
     setIsConfirming(true);
     try {
       const res = await messagingApi.confirmCase(conversationId, 'Case accepted');
-      if (!res.error) await loadConversation(false);
+      if (!res.error) await loadConversation();
     } finally { setIsConfirming(false); }
   };
 
@@ -155,7 +225,7 @@ function ConversationView({ conversationId, currentUser, onBack }: {
     setIsRejecting(true);
     try {
       const res = await messagingApi.rejectCase(conversationId, rejectReason);
-      if (!res.error) { setShowRejectForm(false); setRejectReason(''); await loadConversation(false); }
+      if (!res.error) { setShowRejectForm(false); setRejectReason(''); await loadConversation(); }
     } finally { setIsRejecting(false); }
   };
 
@@ -177,6 +247,7 @@ function ConversationView({ conversationId, currentUser, onBack }: {
   const otherPerson = isCustomer ? conversation.advocate : conversation.customer;
   const caseDetails = conversation.case_details || {};
   const convStatus = conversation.status;
+  const allMessages = messages;
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
@@ -188,7 +259,13 @@ function ConversationView({ conversationId, currentUser, onBack }: {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm">{otherPerson?.name}</p>
-          <p className="text-xs text-muted-foreground capitalize">{otherPerson?.role} {otherPerson?.specialization ? `· ${otherPerson.specialization}` : ''}</p>
+          <p className="text-xs text-muted-foreground capitalize flex items-center gap-1">
+            {wsConnected
+              ? <Wifi className="w-3 h-3 text-green-500" />
+              : <WifiOff className="w-3 h-3 text-muted-foreground" />}
+            {otherPerson?.role} {otherPerson?.specialization ? `· ${otherPerson.specialization}` : ''}
+            {typingUser && <span className="text-indigo-500 animate-pulse">· {typingUser} is typing…</span>}
+          </p>
         </div>
         <Badge variant="secondary" className="text-xs capitalize flex-shrink-0">
           {convStatus === 'active' ? 'Active' :
@@ -290,14 +367,14 @@ function ConversationView({ conversationId, currentUser, onBack }: {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/10 min-h-0">
-        {(!conversation.messages || conversation.messages.length === 0) ? (
+        {allMessages.length === 0 ? (
           <div className="text-center py-12">
             <MessageSquare className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-30" />
             <p className="text-muted-foreground text-sm">No messages yet.</p>
             {isCustomer && <p className="text-xs text-muted-foreground mt-1">Say hello and describe your legal issue!</p>}
           </div>
         ) : (
-          conversation.messages.map((msg: any) => {
+          allMessages.map((msg: any) => {
             const isMe = String(msg.sender?.id) === String(currentUser?.id);
             return (
               <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -377,7 +454,8 @@ function ConversationView({ conversationId, currentUser, onBack }: {
       <div className="flex-shrink-0 border-t border-border bg-card rounded-b-lg">
         <form onSubmit={handleSend} className="p-3 flex gap-2">
           <Input
-            value={input} onChange={(e) => setInput(e.target.value)}
+            value={input}
+            onChange={handleInputChange}
             placeholder="Type a message..." disabled={sending}
             className="flex-1 text-sm" autoFocus
           />

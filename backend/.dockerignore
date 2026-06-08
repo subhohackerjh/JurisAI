@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Python cache
+__pycache__
+*.py[cod]
+*.pyo
+.pytest_cache
+.mypy_cache
+
+# Local dev database — never ship to prod
+db.sqlite3
+
+# Media uploads — use persistent disk or S3 in production
+media/
+
+# Virtualenvs
+.venv
+venv
+env
+
+# Test files
+tests/
+*/tests.py
+*/test_*.py
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Logs
+*.log
+logs/
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+staticfiles/

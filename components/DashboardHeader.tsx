@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, LogOut, Menu, X, Home, MessageSquare, FileText, Briefcase, Users, Search } from 'lucide-react';
+import { User, LogOut, Menu, X, Home, MessageSquare, FileText, Briefcase, Users, Search, IndianRupee, BarChart2, Wand2, Calculator, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -40,18 +40,29 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
           { href: '/dashboard/chat', label: 'Messages', icon: MessageSquare },
           { href: '/dashboard/ecourts', label: 'eCourts', icon: Briefcase },
           { href: '/dashboard/customer/ai-chat', label: 'AI Assistant', icon: FileText },
+          { href: '/dashboard/drafting', label: 'My Drafts', icon: Briefcase },
+          { href: '/dashboard/hearing-updates', label: 'Hearings', icon: Handshake },
+          { href: '/dashboard/cheque-bounce', label: 'Cheque Bounce', icon: IndianRupee },
+          { href: '/dashboard/calculators', label: 'Calculators', icon: Calculator },
+          { href: '/dashboard/payments', label: 'Payments', icon: IndianRupee },
         ]
       : user.role === 'advocate'
         ? [
             { href: '/dashboard/advocate', label: 'Dashboard', icon: Home },
             { href: '/dashboard/advocate/cases', label: 'My Cases', icon: FileText },
+            { href: '/dashboard/advocate/drafts', label: 'Drafts', icon: Briefcase },
+            { href: '/dashboard/advocate/draft', label: 'AI Draft', icon: Wand2 },
+            { href: '/dashboard/advocate/vakalatnama', label: 'Vakalatnama', icon: FileText },
             { href: '/dashboard/chat', label: 'Messages', icon: MessageSquare },
             { href: '/dashboard/ecourts', label: 'eCourts', icon: Search },
+            { href: '/dashboard/calculators', label: 'Calculators', icon: Calculator },
+            { href: '/dashboard/payments', label: 'Earnings', icon: IndianRupee },
           ]
         : user.role === 'admin'
           ? [
               { href: '/dashboard', label: 'Dashboard', icon: Home },
               { href: '/dashboard/admin/approvals', label: 'Approvals', icon: Users },
+              { href: '/dashboard/admin/analytics', label: 'Analytics', icon: BarChart2 },
             ]
           : [
               { href: '/dashboard', label: 'Dashboard', icon: Home },
