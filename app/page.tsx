@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import Legal24Logo from '@/components/Legal24Logo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, FileText, MessageSquare, Shield, ArrowRight, Scale, Gavel, Clock, Award, GraduationCap, Briefcase, Handshake, MapPin, Sparkles, LineChart, Lock, Quote, Check, Mail, Phone, Send, Facebook, Linkedin, Instagram, Bot, ChevronRight } from 'lucide-react';
@@ -13,12 +14,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="border-b border-white/20 bg-white/60 backdrop-blur-2xl sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center overflow-hidden shadow-lg shadow-slate-200/50 p-1">
-              <Image src="/image.png" alt="Legal24 Logo" width={40} height={40} className="w-full h-full object-contain" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Legal24</span>
-          </div>
+          <Legal24Logo href="/" size="md" />
           <nav className="hidden md:flex items-center gap-8 bg-white/50 px-6 py-2 rounded-full border border-slate-200/60 shadow-sm backdrop-blur-md">
             {['Ecosystem', 'Features', 'Reviews'].map((item) => (
               <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors relative group">
@@ -374,11 +370,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
             <div className="lg:col-span-1">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center overflow-hidden shadow-sm p-1">
-                  <Image src="/image.png" alt="Legal24 Logo" width={40} height={40} className="w-full h-full object-contain" />
-                </div>
-                <span className="text-2xl font-bold text-white tracking-tight">Legal24</span>
+              <div className="mb-6">
+                <Legal24Logo href="/" size="lg" className="brightness-0 invert" />
               </div>
               <p className="text-slate-400 text-sm leading-relaxed mb-8 pr-4">
                 Transforming legal engagement for citizens, empowering advocates, and inspiring students across the nation.
