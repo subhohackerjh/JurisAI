@@ -11,9 +11,9 @@ interface Legal24LogoProps {
 
 export default function Legal24Logo({ href = '/', className = '', size = 'md' }: Legal24LogoProps) {
   const dimensions = {
-    sm: { w: 80,  h: 32  },
-    md: { w: 110, h: 44  },
-    lg: { w: 150, h: 60  },
+    sm: { w: 60,  h: 24 },
+    md: { w: 80,  h: 32 },
+    lg: { w: 100, h: 40 },
   }[size];
 
   return (
