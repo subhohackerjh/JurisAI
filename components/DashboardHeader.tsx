@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, LogOut, Menu, X, Home, MessageSquare, FileText, Briefcase, Users, Search, IndianRupee, BarChart2, Wand2, Calculator, Handshake } from 'lucide-react';
+import { User, LogOut, Menu, X, Home, MessageSquare, FileText, Briefcase, Users, Search, IndianRupee, BarChart2, Wand2, Calculator, Handshake, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -82,18 +82,23 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
     return pathname.startsWith(`${href}/`);
   };
 
+  // First 4 links shown inline; the rest collapse into "More"
+  const PRIMARY_COUNT = 4;
+  const primaryLinks = navLinks.slice(0, PRIMARY_COUNT);
+  const moreLinks = navLinks.slice(PRIMARY_COUNT);
+
   return (
     <header className="border-b border-white/20 bg-white/60 backdrop-blur-2xl sticky top-0 z-50 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
         <Legal24Logo href="/dashboard" />
 
         <nav className="hidden lg:flex items-center gap-1 bg-white/50 px-2 py-1.5 rounded-full border border-slate-200/60 shadow-sm backdrop-blur-md">
-          {navLinks.map((link) => (
+          {primaryLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                'text-sm font-semibold px-4 py-2 rounded-full transition-colors relative',
+                'text-sm font-semibold px-4 py-2 rounded-full transition-colors whitespace-nowrap',
                 isActive(link.href)
                   ? 'text-indigo-700 bg-indigo-50'
                   : 'text-slate-600 hover:text-indigo-600 hover:bg-white/80',
@@ -102,6 +107,37 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
               {link.label}
             </Link>
           ))}
+
+          {moreLinks.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className={cn(
+                  'flex items-center gap-1 text-sm font-semibold px-4 py-2 rounded-full transition-colors whitespace-nowrap',
+                  moreLinks.some(l => isActive(l.href))
+                    ? 'text-indigo-700 bg-indigo-50'
+                    : 'text-slate-600 hover:text-indigo-600 hover:bg-white/80',
+                )}>
+                  More <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 rounded-xl border-slate-200/80 shadow-lg">
+                {moreLinks.map((link) => (
+                  <DropdownMenuItem key={link.href} asChild>
+                    <Link
+                      href={link.href}
+                      className={cn(
+                        'flex items-center gap-2 cursor-pointer font-medium',
+                        isActive(link.href) && 'text-indigo-700',
+                      )}
+                    >
+                      <link.icon className="h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">

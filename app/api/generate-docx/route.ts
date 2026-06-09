@@ -1,149 +1,150 @@
 /**
- * Legal24 — DOCX document generator
- * Converts plain text / markdown legal document content into a
- * professionally formatted .docx file with Legal24 branding.
+ * Legal24 — DOCX generator (stamp-paper edition)
+ * A4 · 1.5" side margins · 1" top · 1.5" bottom · Times New Roman 12pt · 1.5× spacing
  */
 import { NextRequest, NextResponse } from 'next/server';
 import {
   Document, Packer, Paragraph, TextRun, Header, Footer,
   AlignmentType, HeadingLevel, BorderStyle, PageNumber,
-  LevelFormat, NumberFormat,
+  LevelFormat, TabStopType,
 } from 'docx';
 
-// A4 page in DXA (1440 DXA = 1 inch)
-const A4_W = 11906;
-const A4_H = 16838;
-const MARGIN = 1440; // 1 inch all sides
-const CONTENT_W = A4_W - MARGIN * 2; // 9026 DXA
+// ── Page geometry (DXA: 1440 = 1 inch) ────────────────────────────────────────
+const A4_W     = 11906;
+const A4_H     = 16838;
+const M_SIDE   = 1440;   // 1" sides — standard legal margin
+const M_TOP    = 1440;   // 1" top
+const M_BOTTOM = 1800;   // 1.25" bottom
+const CONTENT_W = A4_W - M_SIDE * 2;  // 9026 DXA ≈ 6.27"
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function hr(): Paragraph {
   return new Paragraph({
     children: [],
-    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'CCCCCC', space: 1 } },
-    spacing: { before: 200, after: 200 },
+    border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'AAAAAA', space: 1 } },
+    spacing: { before: 280, after: 280 },
   });
 }
 
-function spacer(before = 120, after = 120): Paragraph {
-  return new Paragraph({ children: [new TextRun('')], spacing: { before, after } });
+function spacer(pts = 160): Paragraph {
+  return new Paragraph({ children: [new TextRun('')], spacing: { before: pts, after: pts } });
 }
 
-/**
- * Parse plain text / light markdown into docx Paragraph nodes.
- * Handles: # headings, **bold**, blank lines → spacing, numbered/bullet lines.
- */
+function t(text: string, opts: Record<string, unknown> = {}): TextRun {
+  return new TextRun({ font: 'Times New Roman', size: 24, text, ...opts } as any);
+}
+
+function centred(text: string, opts: Record<string, unknown> = {}): Paragraph {
+  return new Paragraph({
+    children: [t(text, opts)],
+    alignment: AlignmentType.CENTER,
+  });
+}
+
+// Inline bold parser
+function buildRuns(line: string): TextRun[] {
+  const runs: TextRun[] = [];
+  for (const p of line.split(/(\*\*[^*]+\*\*)/g)) {
+    if (!p) continue;
+    if (p.startsWith('**') && p.endsWith('**')) {
+      runs.push(t(p.slice(2, -2), { bold: true }));
+    } else {
+      runs.push(t(p));
+    }
+  }
+  return runs.length ? runs : [t('')];
+}
+
+// ── Content parser ────────────────────────────────────────────────────────────
 function parseLines(text: string): Paragraph[] {
   const paras: Paragraph[] = [];
-  const lines = text.split('\n');
+  const SP = { line: 360, lineRule: 'auto' as const };
 
-  for (const raw of lines) {
+  for (const raw of text.split('\n')) {
     const line = raw.trimEnd();
 
-    // Blank line → small spacer
     if (!line.trim()) {
-      paras.push(spacer(80, 80));
+      paras.push(new Paragraph({ children: [new TextRun('')], spacing: { before: 80, after: 80 } }));
       continue;
     }
 
-    // # Heading 1
     if (line.startsWith('# ')) {
       paras.push(new Paragraph({
         heading: HeadingLevel.HEADING_1,
-        children: [new TextRun({ text: line.slice(2).trim(), bold: true, font: 'Times New Roman', size: 28 })],
-        spacing: { before: 300, after: 120 },
+        children: [t(line.slice(2).trim(), { bold: true, size: 30, allCaps: true })],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 400, after: 160, ...SP },
       }));
       continue;
     }
 
-    // ## Heading 2
     if (line.startsWith('## ')) {
       paras.push(new Paragraph({
         heading: HeadingLevel.HEADING_2,
-        children: [new TextRun({ text: line.slice(3).trim(), bold: true, font: 'Times New Roman', size: 26 })],
-        spacing: { before: 240, after: 100 },
+        children: [t(line.slice(3).trim(), { bold: true, size: 26 })],
+        spacing: { before: 320, after: 120, ...SP },
       }));
       continue;
     }
 
-    // ### Heading 3
     if (line.startsWith('### ')) {
       paras.push(new Paragraph({
-        children: [new TextRun({ text: line.slice(4).trim(), bold: true, underline: {}, font: 'Times New Roman', size: 24 })],
-        spacing: { before: 180, after: 80 },
+        children: [t(line.slice(4).trim(), { bold: true, underline: {} })],
+        spacing: { before: 240, after: 100, ...SP },
       }));
       continue;
     }
 
-    // Horizontal rule ─────
     if (/^[-─═]{4,}$/.test(line.trim())) {
       paras.push(hr());
       continue;
     }
 
-    // Parse inline bold (**text**) and build TextRun array
-    const runs: TextRun[] = buildRuns(line);
-
-    // Numbered list  (1. item or 1) item)
     if (/^\d+[.)]\s/.test(line.trim())) {
       paras.push(new Paragraph({
         numbering: { reference: 'numbered', level: 0 },
         children: buildRuns(line.replace(/^\d+[.)]\s/, '')),
-        spacing: { before: 60, after: 60 },
+        spacing: { before: 80, after: 80, ...SP },
       }));
       continue;
     }
 
-    // Bullet list  (• or - or *)
     if (/^[•\-\*]\s/.test(line.trim())) {
       paras.push(new Paragraph({
         numbering: { reference: 'bullets', level: 0 },
         children: buildRuns(line.replace(/^[•\-\*]\s/, '')),
-        spacing: { before: 60, after: 60 },
+        spacing: { before: 80, after: 80, ...SP },
       }));
       continue;
     }
 
-    // ALL CAPS line → treat as section heading
-    if (line === line.toUpperCase() && line.trim().length > 3 && !/^\d/.test(line)) {
+    // ALL-CAPS section heading
+    const stripped = line.replace(/[^a-zA-Z]/g, '');
+    if (stripped.length > 2 && stripped === stripped.toUpperCase() && !/^\d/.test(line.trim())) {
       paras.push(new Paragraph({
-        children: [new TextRun({ text: line.trim(), bold: true, font: 'Times New Roman', size: 24, allCaps: true })],
+        children: [t(line.trim(), { bold: true, allCaps: true })],
         alignment: AlignmentType.CENTER,
-        spacing: { before: 240, after: 120 },
+        spacing: { before: 320, after: 160 },
       }));
       continue;
     }
 
-    // Normal paragraph
+    // Normal — justified, 1.5× spacing
     paras.push(new Paragraph({
-      children: runs,
-      spacing: { before: 80, after: 80 },
+      children: buildRuns(line),
       alignment: AlignmentType.JUSTIFIED,
+      spacing: { before: 100, after: 100, ...SP },
     }));
   }
-
   return paras;
 }
 
-function buildRuns(text: string): TextRun[] {
-  const runs: TextRun[] = [];
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  for (const part of parts) {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      runs.push(new TextRun({ text: part.slice(2, -2), bold: true, font: 'Times New Roman', size: 24 }));
-    } else if (part) {
-      runs.push(new TextRun({ text: part, font: 'Times New Roman', size: 24 }));
-    }
-  }
-  return runs.length ? runs : [new TextRun({ text: '', font: 'Times New Roman', size: 24 })];
-}
-
+// ── Route ─────────────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   try {
     const { content, title, docType } = await request.json();
-
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== 'string')
       return NextResponse.json({ error: 'content is required' }, { status: 400 });
-    }
 
     const docTitle = title || 'Legal Document';
     const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -151,44 +152,29 @@ export async function POST(request: NextRequest) {
     const doc = new Document({
       title: docTitle,
       creator: 'Legal24',
-      description: `${docType || 'Legal Document'} generated by Legal24`,
-
       numbering: {
         config: [
           {
             reference: 'bullets',
-            levels: [{
-              level: 0, format: LevelFormat.BULLET, text: '•',
-              alignment: AlignmentType.LEFT,
-              style: { paragraph: { indent: { left: 720, hanging: 360 } } },
-            }],
+            levels: [{ level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.LEFT,
+              style: { paragraph: { indent: { left: 720, hanging: 360 } } } }],
           },
           {
             reference: 'numbered',
-            levels: [{
-              level: 0, format: LevelFormat.DECIMAL, text: '%1.',
-              alignment: AlignmentType.LEFT,
-              style: { paragraph: { indent: { left: 720, hanging: 360 } } },
-            }],
+            levels: [{ level: 0, format: LevelFormat.DECIMAL, text: '%1.', alignment: AlignmentType.LEFT,
+              style: { paragraph: { indent: { left: 720, hanging: 360 } } } }],
           },
         ],
       },
-
       styles: {
-        default: {
-          document: { run: { font: 'Times New Roman', size: 24 } },
-        },
+        default: { document: { run: { font: 'Times New Roman', size: 24 } } },
         paragraphStyles: [
-          {
-            id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal',
-            run: { font: 'Times New Roman', size: 28, bold: true, color: '1a1a1a' },
-            paragraph: { spacing: { before: 300, after: 120 }, outlineLevel: 0 },
-          },
-          {
-            id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal',
-            run: { font: 'Times New Roman', size: 26, bold: true, color: '1a1a1a' },
-            paragraph: { spacing: { before: 240, after: 100 }, outlineLevel: 1 },
-          },
+          { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal',
+            run: { font: 'Times New Roman', size: 30, bold: true, color: '000000' },
+            paragraph: { spacing: { before: 400, after: 160 }, outlineLevel: 0 } },
+          { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal',
+            run: { font: 'Times New Roman', size: 26, bold: true, color: '000000' },
+            paragraph: { spacing: { before: 320, after: 120 }, outlineLevel: 1 } },
         ],
       },
 
@@ -196,88 +182,118 @@ export async function POST(request: NextRequest) {
         properties: {
           page: {
             size: { width: A4_W, height: A4_H },
-            margin: { top: MARGIN, right: MARGIN, bottom: MARGIN + 360, left: MARGIN },
+            margin: { top: M_TOP, right: M_SIDE, bottom: M_BOTTOM, left: M_SIDE },
+            // Page border: single thin box on all sides
+            borders: {
+              pageBorderTop:    { style: BorderStyle.SINGLE, size: 12, color: '444444', space: 24 },
+              pageBorderBottom: { style: BorderStyle.SINGLE, size: 12, color: '444444', space: 24 },
+              pageBorderLeft:   { style: BorderStyle.SINGLE, size: 12, color: '444444', space: 24 },
+              pageBorderRight:  { style: BorderStyle.SINGLE, size: 12, color: '444444', space: 24 },
+            } as any,
           },
         },
 
         headers: {
           default: new Header({
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({ text: 'Legal24', bold: true, font: 'Arial', size: 18, color: '4338CA' }),
-                  new TextRun({ text: '  |  ' + docTitle, font: 'Arial', size: 18, color: '666666' }),
-                  new TextRun({ text: '\t' + today, font: 'Arial', size: 18, color: '666666' }),
-                ],
-                border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'E0E7FF', space: 1 } },
-                tabStops: [{ type: 'right' as any, position: CONTENT_W }],
-                spacing: { after: 100 },
-              }),
-            ],
+            children: [new Paragraph({
+              children: [
+                new TextRun({ text: 'LEGAL24', bold: true, font: 'Arial', size: 16, color: '4338CA' }),
+                new TextRun({ text: '  ·  India\'s Legal Services Platform', font: 'Arial', size: 15, color: '888888' }),
+                new TextRun({ text: '\t' + today, font: 'Arial', size: 15, color: '888888' }),
+              ],
+              border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'DDDDDD', space: 1 } },
+              tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_W }],
+              spacing: { after: 80 },
+            })],
           }),
         },
 
         footers: {
           default: new Footer({
-            children: [
-              new Paragraph({
-                children: [
-                  new TextRun({ text: 'Generated by Legal24 — India\'s Legal Services Platform  |  legal24.in', font: 'Arial', size: 16, color: '888888' }),
-                  new TextRun({ text: '\tPage ', font: 'Arial', size: 16, color: '888888' }),
-                  new TextRun({ children: [PageNumber.CURRENT], font: 'Arial', size: 16, color: '888888' }),
-                  new TextRun({ text: ' of ', font: 'Arial', size: 16, color: '888888' }),
-                  new TextRun({ children: [PageNumber.TOTAL_PAGES], font: 'Arial', size: 16, color: '888888' }),
-                ],
-                border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'E0E7FF', space: 1 } },
-                tabStops: [{ type: 'right' as any, position: CONTENT_W }],
-                spacing: { before: 100 },
-                alignment: AlignmentType.LEFT,
-              }),
-              new Paragraph({
-                children: [new TextRun({ text: 'AI-assisted document. Verify with a qualified advocate before use.', font: 'Arial', size: 14, color: 'AAAAAA', italics: true })],
-                alignment: AlignmentType.CENTER,
-              }),
-            ],
+            children: [new Paragraph({
+              children: [
+                new TextRun({ text: 'legal24.in  |  AI-assisted draft — verify with a qualified advocate before use.', font: 'Arial', size: 15, color: '999999', italics: true }),
+                new TextRun({ text: '\tPage ', font: 'Arial', size: 15, color: '999999' }),
+                new TextRun({ children: [PageNumber.CURRENT], font: 'Arial', size: 15, color: '999999' }),
+                new TextRun({ text: ' / ', font: 'Arial', size: 15, color: '999999' }),
+                new TextRun({ children: [PageNumber.TOTAL_PAGES], font: 'Arial', size: 15, color: '999999' }),
+              ],
+              border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'DDDDDD', space: 1 } },
+              tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_W }],
+              spacing: { before: 80 },
+            })],
           }),
         },
 
         children: [
-          // Document title block
-          new Paragraph({
-            children: [new TextRun({ text: docTitle, bold: true, font: 'Times New Roman', size: 32, color: '1a1a1a' })],
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 200, after: 80 },
-          }),
-          new Paragraph({
-            children: [new TextRun({ text: docType ? `Document Type: ${docType}` : '', font: 'Arial', size: 18, color: '4338CA' })],
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 0, after: 200 },
-          }),
+          // Stamp paper identifier
+          spacer(80),
+          centred('NON-JUDICIAL STAMP PAPER', { size: 17, color: '888888', italics: true }),
+          centred('(For Execution of Legal Documents — Not for Court Filing)', { size: 16, color: 'AAAAAA', italics: true }),
+          spacer(80),
           hr(),
-          spacer(160, 160),
+          spacer(120),
 
-          // Main content parsed from text
+          // Title
+          centred(docTitle.toUpperCase(), { bold: true, size: 30 }),
+          ...(docType ? [centred(docType, { size: 20, color: '4338CA' })] : []),
+          spacer(80),
+          hr(),
+          spacer(160),
+
+          // Body
           ...parseLines(content),
 
-          spacer(200, 80),
+          // Signature block
+          spacer(240),
           hr(),
+          spacer(80),
+          new Paragraph({
+            children: [t('SIGNED AND VERIFIED by the parties on the date mentioned herein.')],
+            alignment: AlignmentType.JUSTIFIED,
+            spacing: { before: 80, after: 240 },
+          }),
+          new Paragraph({
+            children: [
+              t('_______________________________'),
+              t('\t_______________________________'),
+            ],
+            tabStops: [{ type: TabStopType.LEFT, position: Math.round(CONTENT_W * 0.55) }],
+            spacing: { before: 80, after: 60 },
+          }),
+          new Paragraph({
+            children: [
+              t('Signature of Party / Client', { color: '555555' }),
+              t('\tSignature of Advocate', { color: '555555' }),
+            ],
+            tabStops: [{ type: TabStopType.LEFT, position: Math.round(CONTENT_W * 0.55) }],
+            spacing: { before: 0, after: 60 },
+          }),
+          new Paragraph({
+            children: [
+              t('Date: ___________________', { color: '555555' }),
+              t('\tEnrollment No.: ___________________', { color: '555555' }),
+            ],
+            tabStops: [{ type: TabStopType.LEFT, position: Math.round(CONTENT_W * 0.55) }],
+            spacing: { before: 60, after: 200 },
+          }),
 
           // Disclaimer
           new Paragraph({
             children: [new TextRun({
-              text: 'DISCLAIMER: This document has been generated using AI technology with knowledge of Indian laws and legal conventions. It is intended as a starting point and should be reviewed and customised by a qualified advocate before use in any legal proceedings.',
-              font: 'Arial', size: 18, italics: true, color: '666666',
+              text: 'DISCLAIMER: This document was generated with AI assistance using knowledge of Indian laws. It is a draft only — review and customise with a qualified advocate before use in any legal proceedings. It does not constitute legal advice.',
+              font: 'Arial', size: 17, italics: true, color: '888888',
             })],
-            spacing: { before: 120, after: 80 },
             alignment: AlignmentType.JUSTIFIED,
+            border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'EEEEEE', space: 1 } },
+            spacing: { before: 160, after: 80 },
           }),
         ],
       }],
     });
 
     const buffer = await Packer.toBuffer(doc);
-
-    const filename = `${(docTitle).replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_')}.docx`;
+    const filename = `${docTitle.replace(/[^a-zA-Z0-9 _\-]/g, '').replace(/\s+/g, '_')}.docx`;
 
     return new NextResponse(buffer, {
       status: 200,
@@ -290,6 +306,6 @@ export async function POST(request: NextRequest) {
 
   } catch (err: any) {
     console.error('[generate-docx]', err);
-    return NextResponse.json({ error: 'Failed to generate document' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to generate document: ' + err.message }, { status: 500 });
   }
 }

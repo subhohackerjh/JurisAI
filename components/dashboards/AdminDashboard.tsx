@@ -24,14 +24,14 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load data on component mount
+  useEffect(() => {
+    if (session.user?.role === 'admin') loadDashboardData();
+  }, [session.user?.role]);
+
   if (!session.user || session.user.role !== 'admin') {
     return null;
   }
-
-  // Load data on component mount
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
 
   const loadDashboardData = async () => {
     try {

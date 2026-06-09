@@ -14,12 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReactMarkdown from 'react-markdown';
 import {
-  Lock, Sparkles, FileText, Download, Copy, CheckCheck,
-  Loader2, IndianRupee, ChevronRight, Wand2, Eye, PenTool
+  Lock, Sparkles, FileText, Copy, CheckCheck,
+  Loader2, IndianRupee, Wand2, Eye, PenTool
 } from 'lucide-react';
-import { downloadAsDocx } from '@/lib/download-docx';
-import { api } from '@/lib/api';
+import { apiCall } from '@/lib/api';
 import Link from 'next/link';
+import DownloadButton from '@/components/DownloadButton';
 
 const DOCUMENT_TYPES = [
   { value: 'notice',            label: 'Legal Notice',            icon: '📬', desc: 'Section 80 CPC / Section 138 NI Act' },
@@ -90,7 +90,17 @@ function DraftingTool({ hasPaid }: { hasPaid: boolean }) {
   const { user } = useAuth();
   const [docType, setDocType] = useState('notice');
   const [requirements, setRequirements] = useState('');
-  const [partiesInfo, setPartiesInfo] = useState('');
+  // Pre-fill customer's own name and address as Sender/Party
+  const [partiesInfo, setPartiesInfo] = useState(() => {
+    const parts: string[] = [];
+    if (user?.name) parts.push(`Sender / Party: ${user.name}`);
+    if (user?.phone) parts.push(`Phone: ${user.phone}`);
+    if (user?.address) {
+      const addr = [user.address, user.city, user.state, user.pincode].filter(Boolean).join(', ');
+      if (addr) parts.push(`Address: ${addr}`);
+    }
+    return parts.join('\n');
+  });
   const [additionalContext, setAdditionalContext] = useState('');
   const [draftContent, setDraftContent] = useState('');
   const [generating, setGenerating] = useState(false);
@@ -150,13 +160,6 @@ function DraftingTool({ hasPaid }: { hasPaid: boolean }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const download = async () => {
-    if (!draftContent) return;
-    const label = DOCUMENT_TYPES.find(d => d.value === docType)?.label || 'Legal Document';
-    try {
-      await downloadAsDocx(draftContent, `${label}_Draft`, label);
-    } catch { alert('Download failed. Try again.'); }
-  };
 
   return (
     <div className="grid lg:grid-cols-2 gap-6">
@@ -224,9 +227,12 @@ function DraftingTool({ hasPaid }: { hasPaid: boolean }) {
                 {copied ? <CheckCheck className="w-3.5 h-3.5 mr-1 text-green-600" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
                 {copied ? 'Copied' : 'Copy'}
               </Button>
-              <Button size="sm" variant="outline" onClick={download}>
-                <Download className="w-3.5 h-3.5 mr-1" /> Download
-              </Button>
+              <DownloadButton
+                getContent={() => {
+                  const label = DOCUMENT_TYPES.find(d => d.value === docType)?.label || 'Legal Document';
+                  return { content: draftContent, title: `${label}_Draft`, docType: label };
+                }}
+              />
             </div>
           )}
         </div>
@@ -246,7 +252,7 @@ function DraftingTool({ hasPaid }: { hasPaid: boolean }) {
             />
           )}
           {tab === 'preview' && draftContent && (
-            <div className="prose prose-sm max-w-none text-slate-800">
+            <div className="chat-markdown text-slate-800">
               <ReactMarkdown>{draftContent}</ReactMarkdown>
             </div>
           )}
@@ -273,7 +279,7 @@ export default function CustomerAIDraftPage() {
   useEffect(() => {
     if (!user) return;
     // Check if user has any completed payment
-    api.get('/api/payments/')
+    apiCall<any>('/api/payments/', { method: 'GET' })
       .then((res: any) => {
         const payments = res?.results ?? res ?? [];
         const paid = Array.isArray(payments) && payments.some((p: any) => p.status === 'SUCCESS' || p.status === 'completed');

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { profileApi } from '@/lib/api';
 import { User, UserStats } from '@/lib/types';
+import { useAuth } from '@/context/AuthContext';
 
 export function useProfile() {
+  const { updateUser } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -10,13 +12,14 @@ export function useProfile() {
   const fetchProfile = async () => {
     setIsLoading(true);
     setError(null);
-
     try {
       const response = await profileApi.getProfile();
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        setProfile(response.data as User);
+        const data = response.data as User;
+        setProfile(data);
+        updateUser(data); // keep auth session in sync
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch profile');
@@ -25,58 +28,51 @@ export function useProfile() {
     }
   };
 
-  const updateProfile = async (profileData: any) => {
+  const updateProfile = async (profileData: Partial<User> & Record<string, any>) => {
     setError(null);
     try {
       const response = await profileApi.updateProfile(profileData);
       if (response.error) {
         setError(response.error);
         return { success: false, error: response.error };
-      } else if (response.data) {
+      }
+      if (response.data) {
         const body = response.data as { user?: User; message?: string };
         const updatedUser = body.user ?? (response.data as User);
         setProfile(updatedUser);
+        updateUser(updatedUser); // ← sync to AuthContext + localStorage
         return { success: true, data: updatedUser };
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      const msg = err instanceof Error ? err.message : 'Failed to update profile';
+      setError(msg);
+      return { success: false, error: msg };
     }
   };
 
-  const changePassword = async (passwordData: {
+  const changePassword = async (data: {
     old_password: string;
     new_password: string;
     new_password_confirm: string;
   }) => {
     setError(null);
     try {
-      const response = await profileApi.changePassword(passwordData);
+      const response = await profileApi.changePassword(data);
       if (response.error) {
         setError(response.error);
         return { success: false, error: response.error };
       }
       return { success: true };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to change password';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
+      const msg = err instanceof Error ? err.message : 'Failed to change password';
+      setError(msg);
+      return { success: false, error: msg };
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  useEffect(() => { fetchProfile(); }, []); // eslint-disable-line
 
-  return {
-    profile,
-    isLoading,
-    error,
-    refetch: fetchProfile,
-    updateProfile,
-    changePassword,
-  };
+  return { profile, isLoading, error, refetch: fetchProfile, updateProfile, changePassword };
 }
 
 export function useUserStats() {
@@ -87,14 +83,10 @@ export function useUserStats() {
   const fetchStats = async () => {
     setIsLoading(true);
     setError(null);
-
     try {
       const response = await profileApi.getStats();
-      if (response.error) {
-        setError(response.error);
-      } else if (response.data) {
-        setStats(response.data as UserStats);
-      }
+      if (response.error) setError(response.error);
+      else if (response.data) setStats(response.data as UserStats);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch stats');
     } finally {
@@ -102,14 +94,7 @@ export function useUserStats() {
     }
   };
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  useEffect(() => { fetchStats(); }, []); // eslint-disable-line
 
-  return {
-    stats,
-    isLoading,
-    error,
-    refetch: fetchStats,
-  };
+  return { stats, isLoading, error, refetch: fetchStats };
 }

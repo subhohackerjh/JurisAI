@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { FileText, Download, Copy, Check, Printer, Loader2 } from 'lucide-react';
-import { downloadAsDocx } from '@/lib/download-docx';
+import { FileText, Copy, Check, Printer } from 'lucide-react';
+import DownloadButton from '@/components/DownloadButton';
 
 interface VForm {
   // Client
@@ -140,9 +140,13 @@ Note: This Vakalatnama is executed in accordance with Order III Rule 4, Code of 
 
 export default function VakalatnamaPage() {
   const { user, logout } = useAuth();
-  const [form, setForm] = useState<VForm>({ ...BLANK, advocateName: user?.name || '' });
+  const [form, setForm] = useState<VForm>({
+    ...BLANK,
+    advocateName:      user?.name || '',
+    advocateEnrollment: (user as any)?.enrollment_number || '',
+    barCouncil:        (user as any)?.bar_council || '',
+  });
   const [copied, setCopied] = useState(false);
-  const [downloading, setDownloading] = useState(false);
   const [preview, setPreview] = useState(false);
 
   const set = (k: keyof VForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -157,14 +161,6 @@ export default function VakalatnamaPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const downloadTxt = async () => {
-    setDownloading(true);
-    try {
-      const docTitle = `Vakalatnama_${form.clientName || 'client'}${form.caseNumber ? '_' + form.caseNumber : ''}`;
-      await downloadAsDocx(text, docTitle, 'Vakalatnama');
-    } catch { alert('Download failed. Try again.'); }
-    finally { setDownloading(false); }
-  };
 
   const print = () => {
     const win = window.open('', '_blank');
@@ -293,10 +289,12 @@ export default function VakalatnamaPage() {
                   {copied ? <Check className="w-4 h-4 mr-1 text-green-600" /> : <Copy className="w-4 h-4 mr-1" />}
                   {copied ? 'Copied' : 'Copy'}
                 </Button>
-                <Button size="sm" variant="outline" onClick={downloadTxt} disabled={downloading}>
-                  {downloading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-                  .docx
-                </Button>
+                <DownloadButton
+                  getContent={() => {
+                    const docTitle = `Vakalatnama_${form.clientName || 'client'}${form.caseNumber ? '_' + form.caseNumber : ''}`;
+                    return { content: text, title: docTitle, docType: 'Vakalatnama' };
+                  }}
+                />
                 <Button size="sm" variant="outline" onClick={print}>
                   <Printer className="w-4 h-4 mr-1" /> Print
                 </Button>

@@ -22,14 +22,14 @@ export default function CitizenDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [messageLoading, setMessageLoading] = useState<string | null>(null);
 
+  // Load data on component mount
+  useEffect(() => {
+    if (session.user?.role === 'customer') loadDashboardData();
+  }, [session.user?.role]);
+
   if (!session.user || session.user.role !== 'customer') {
     return null;
   }
-
-  // Load data on component mount
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
 
   const loadDashboardData = async () => {
     try {

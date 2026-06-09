@@ -23,6 +23,8 @@ export default function ProfilePage() {
     phone: '',
     specialization: '',
     experience_years: '',
+    enrollment_number: '',
+    bar_council: '',
     address: '',
     city: '',
     state: '',
@@ -54,6 +56,8 @@ export default function ProfilePage() {
         phone: extended.phone || '',
         specialization: extended.specialization || '',
         experience_years: extended.experience_years?.toString() || '',
+        enrollment_number: (extended as any).enrollment_number || '',
+        bar_council: (extended as any).bar_council || '',
         address: extended.address || '',
         city: extended.city || '',
         state: extended.state || '',
@@ -80,6 +84,8 @@ export default function ProfilePage() {
 
       if (profileForm.specialization) payload.specialization = profileForm.specialization;
       if (profileForm.experience_years) payload.experience_years = parseInt(profileForm.experience_years);
+      if (profileForm.enrollment_number) payload.enrollment_number = profileForm.enrollment_number;
+      if (profileForm.bar_council) payload.bar_council = profileForm.bar_council;
       if (profileForm.address) payload.address = profileForm.address;
       if (profileForm.city) payload.city = profileForm.city;
       if (profileForm.state) payload.state = profileForm.state;
@@ -238,6 +244,29 @@ export default function ProfilePage() {
                               type="number"
                               value={profileForm.experience_years}
                               onChange={(e) => setProfileForm({ ...profileForm, experience_years: e.target.value })}
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="enrollment_number">Bar Enrollment Number</Label>
+                            <Input
+                              id="enrollment_number"
+                              placeholder="e.g. D/1234/2018"
+                              value={profileForm.enrollment_number}
+                              onChange={(e) => setProfileForm({ ...profileForm, enrollment_number: e.target.value })}
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="bar_council">Bar Council</Label>
+                            <Input
+                              id="bar_council"
+                              placeholder="e.g. Bar Council of Delhi"
+                              value={profileForm.bar_council}
+                              onChange={(e) => setProfileForm({ ...profileForm, bar_council: e.target.value })}
                               disabled={isSubmitting}
                             />
                           </div>

@@ -17,14 +17,14 @@ export default function AdvocateDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Load data on component mount
+  useEffect(() => {
+    if (session.user?.role === 'advocate') loadDashboardData();
+  }, [session.user?.role]);
+
   if (!session.user || session.user.role !== 'advocate') {
     return null;
   }
-
-  // Load data on component mount
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
 
   const loadDashboardData = async () => {
     try {

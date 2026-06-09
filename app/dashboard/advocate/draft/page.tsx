@@ -16,11 +16,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import ReactMarkdown from 'react-markdown';
 import {
-  Sparkles, FileText, Download, Copy, CheckCheck,
+  Sparkles, FileText, Copy, CheckCheck,
   Loader2, RefreshCw, BookOpen, Scale, Gavel,
   PenTool, Eye, AlertCircle, ChevronRight, Wand2
 } from 'lucide-react';
-import { downloadAsDocx } from '@/lib/download-docx';
+import DownloadButton from '@/components/DownloadButton';
 
 const DOCUMENT_TYPES = [
   { value: 'notice',            label: 'Legal Notice',            icon: '📬', desc: 'Section 80 CPC / Section 138 NI Act' },
@@ -48,7 +48,16 @@ export default function AdvocateAIDraftPage() {
 
   const [docType, setDocType] = useState('');
   const [requirements, setRequirements] = useState('');
-  const [partiesInfo, setPartiesInfo] = useState('');
+  // Pre-fill advocate's own details as Advocate party
+  const [partiesInfo, setPartiesInfo] = useState(() => {
+    const parts: string[] = [];
+    if (user?.name) parts.push(`Advocate: ${user.name}`);
+    const enroll = (user as any)?.enrollment_number;
+    const bc = (user as any)?.bar_council;
+    if (enroll) parts.push(`Enrollment No: ${enroll}`);
+    if (bc) parts.push(`Bar Council: ${bc}`);
+    return parts.join('\n');
+  });
   const [additionalContext, setAdditionalContext] = useState('');
   const [generating, setGenerating] = useState(false);
   const [draftContent, setDraftContent] = useState('');
@@ -122,13 +131,6 @@ export default function AdvocateAIDraftPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const downloadDraft = async () => {
-    if (!draftContent) return;
-    const docLabel = DOCUMENT_TYPES.find(d => d.value === docType)?.label || 'Legal Document';
-    try {
-      await downloadAsDocx(draftContent, `${docLabel}_Draft`, docLabel);
-    } catch { alert('Download failed. Try again.'); }
-  };
 
   const addLawReference = (law: string) => {
     setAdditionalContext(prev => prev ? `${prev}\nRelevant law: ${law}` : `Relevant law: ${law}`);
@@ -293,9 +295,14 @@ export default function AdvocateAIDraftPage() {
                   <Button variant="ghost" size="sm" onClick={copyDraft} disabled={!draftContent} title="Copy">
                     {copied ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={downloadDraft} disabled={!draftContent} title="Download .txt">
-                    <Download className="w-4 h-4" />
-                  </Button>
+                  <DownloadButton
+                    variant="ghost"
+                    getContent={() => {
+                      if (!draftContent) return null;
+                      const docLabel = DOCUMENT_TYPES.find(d => d.value === docType)?.label || 'Legal Document';
+                      return { content: draftContent, title: `${docLabel}_Draft`, docType: docLabel };
+                    }}
+                  />
                   {draftContent && (
                     <Button variant="ghost" size="sm" onClick={generateDraft} disabled={generating} title="Regenerate">
                       <RefreshCw className="w-4 h-4" />

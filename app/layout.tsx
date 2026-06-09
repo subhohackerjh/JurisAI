@@ -11,6 +11,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://legal24.in'),
   title: 'Legal24 | India\'s Unified Legal AI & Advocate Network',
   description: 'Legal24 uses advanced AI to give instant, highly accurate legal advice verified against real Indian court cases. Seamlessly connect with top nearby advocates or land core law student internships.',
   keywords: 'AI legal advice India, find nearby lawyers, hire advocate, AI legal triage, online legal consultation, dynamic case leads, law student internships, legal tech platform, ChatGPT for law',

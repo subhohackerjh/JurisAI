@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, AlertCircle, Clock, ChevronRight, ChevronLeft, Copy, Download, IndianRupee, FileText, Loader2 } from 'lucide-react';
-import { downloadAsDocx } from '@/lib/download-docx';
+import { CheckCircle2, AlertCircle, Clock, ChevronRight, ChevronLeft, Copy, IndianRupee, FileText } from 'lucide-react';
+import DownloadButton from '@/components/DownloadButton';
 
 // ── Step data ─────────────────────────────────────────────────────────────────
 const STEPS = [
@@ -208,17 +208,9 @@ function DatesStep({ f, set }: { f: Form; set: (k: keyof Form) => any }) {
 
 function NoticeStep({ f }: { f: Form }) {
   const [copied, setCopied] = useState(false);
-  const [downloading, setDownloading] = useState(false);
   const notice = generateNotice(f);
 
   const copy = async () => { await navigator.clipboard.writeText(notice); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const download = async () => {
-    setDownloading(true);
-    try {
-      await downloadAsDocx(notice, `Legal_Notice_S138_${f.drawerName || 'accused'}`, 'Legal Notice — Section 138 NI Act');
-    } catch { alert('Download failed. Try again.'); }
-    finally { setDownloading(false); }
-  };
 
   return (
     <div className="space-y-4">
@@ -230,10 +222,13 @@ function NoticeStep({ f }: { f: Form }) {
           {copied ? <CheckCircle2 className="w-4 h-4 mr-1 text-green-600" /> : <Copy className="w-4 h-4 mr-1" />}
           {copied ? 'Copied' : 'Copy'}
         </Button>
-        <Button size="sm" variant="outline" onClick={download} disabled={downloading}>
-          {downloading ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
-          .docx
-        </Button>
+        <DownloadButton
+          getContent={() => ({
+            content: notice,
+            title: `Legal_Notice_S138_${f.drawerName || 'accused'}`,
+            docType: 'Legal Notice — Section 138 NI Act',
+          })}
+        />
       </div>
       <Card className="p-5 bg-white">
         <pre className="text-xs font-mono whitespace-pre-wrap leading-relaxed text-slate-800 overflow-auto max-h-[500px]">{notice}</pre>

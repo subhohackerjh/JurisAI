@@ -8,13 +8,20 @@ export interface User {
   name: string;
   role: UserRole;
   phone?: string;
+  // Advocate-specific
   specialization?: string;
   experience_years?: number;
-  bar_council_id?: string;
+  enrollment_number?: string;   // Bar enrollment number e.g. D/1234/2018
+  bar_council?: string;         // e.g. "Bar Council of Delhi"
+  bar_council_id?: string;      // legacy / backend FK
   rating?: string;
   cases_handled?: number;
+  consultation_fee?: string | number;
+  availability?: string;
+  // Police-specific
   badge_number?: string;
   station?: string;
+  // Shared
   approval_status?: ApprovalStatus;
   rejection_reason?: string;
   is_active?: boolean;
@@ -27,8 +34,6 @@ export interface User {
   state?: string;
   pincode?: string;
   bio?: string;
-  consultation_fee?: string | number;
-  availability?: string;
 }
 
 export interface Advocate extends User {

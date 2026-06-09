@@ -85,13 +85,28 @@ CHANNEL_LAYERS = {
     }
 }
 
-# Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database — Supabase (PostgreSQL) when DATABASE_URL is set, else SQLite for local dev
+_db_url = config('DATABASE_URL', default='')
+if _db_url:
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.parse(
+            _db_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+# Supabase client credentials (for direct Supabase API use if needed)
+SUPABASE_URL = config('SUPABASE_URL', default='')
+SUPABASE_KEY = config('SUPABASE_KEY', default='')
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

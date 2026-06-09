@@ -231,9 +231,9 @@ Ask me anything about Indian law. How can I help you today?`,
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main chat */}
           <div className="lg:col-span-2">
-            <Card className="flex flex-col h-[620px]">
+            <Card className="flex flex-col h-[620px] overflow-hidden">
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
+              <ScrollArea className="flex-1 min-h-0 p-4">
                 <div className="space-y-4">
                   {messages.map(message => (
                     <div
@@ -253,7 +253,7 @@ Ask me anything about Indian law. How can I help you today?`,
                             : 'bg-muted rounded-bl-sm'
                         }`}>
                           {message.role === 'assistant' ? (
-                            <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-p:leading-relaxed">
+                            <div className="chat-markdown">
                               <ReactMarkdown>{message.content}</ReactMarkdown>
                               {message.isStreaming && (
                                 <span className="inline-block w-2 h-4 bg-indigo-500 animate-pulse ml-0.5 rounded-sm" />

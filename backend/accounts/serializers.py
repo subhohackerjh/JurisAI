@@ -20,6 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'name', 'role', 'phone',
             'specialization', 'experience_years', 'bar_council_id',
+            'enrollment_number', 'bar_council',
             'rating', 'cases_handled', 'badge_number', 'station',
             'approval_status', 'rejection_reason',
             'is_active', 'date_joined', 'last_login',
@@ -76,20 +77,22 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fields = [
             'email', 'name', 'role', 'phone', 'password', 'password_confirm',
             'specialization', 'experience_years', 'bar_council_id',
+            'enrollment_number', 'bar_council',
             'badge_number', 'station'
         ]
-    
+
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError("Passwords don't match")
-        
+
         # Role-specific validation
         role = attrs.get('role')
         if role == 'advocate':
             if not attrs.get('specialization'):
                 raise serializers.ValidationError("Specialization is required for advocates")
-            if not attrs.get('bar_council_id'):
-                raise serializers.ValidationError("Bar Council ID is required for advocates")
+            # Accept either new bar_council or legacy bar_council_id
+            if not attrs.get('bar_council_id') and not attrs.get('bar_council'):
+                raise serializers.ValidationError("Bar Council is required for advocates")
         
         if role == 'police':
             if not attrs.get('badge_number'):
@@ -132,6 +135,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'phone': user.phone,
             'specialization': user.specialization,
             'experience_years': user.experience_years,
+            'enrollment_number': user.enrollment_number,
+            'bar_council': user.bar_council,
             'rating': str(user.rating),
             'cases_handled': user.cases_handled,
         }
@@ -143,6 +148,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'name', 'phone', 'specialization', 'experience_years',
+            'enrollment_number', 'bar_council',
             'address', 'city', 'state', 'pincode', 'bio', 'consultation_fee'
         ]
     

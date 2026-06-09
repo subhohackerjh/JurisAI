@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCreateDraft, useDrafts } from '@/hooks/useDrafts';
-import { downloadAsDocx } from '@/lib/download-docx';
+import DownloadButton from '@/components/DownloadButton';
 import { useAdvocates } from '@/hooks/useAdvocates';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
@@ -354,14 +354,16 @@ export default function DraftingPage() {
                             <div className="mt-2 p-3 bg-white rounded-lg border border-green-200 text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">
                               {draft.draft_text}
                             </div>
-                            <button
-                              className="mt-1 text-xs text-blue-600 hover:underline"
-                              onClick={() => {
-                                downloadAsDocx(draft.draft_text, `${draft.document_type}_draft`, draft.document_type).catch(() => alert('Download failed'));
-                              }}
-                            >
-                              ⬇ Download
-                            </button>
+                            <DownloadButton
+                              size="sm"
+                              variant="ghost"
+                              label="Download"
+                              getContent={() => ({
+                                content: draft.draft_text,
+                                title: `${draft.document_type}_draft`,
+                                docType: draft.document_type,
+                              })}
+                            />
                           </details>
                         </div>
                       )}

@@ -28,7 +28,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Advocate specific fields
     specialization = models.CharField(max_length=255, blank=True, null=True)
     experience_years = models.PositiveIntegerField(blank=True, null=True)
-    bar_council_id = models.CharField(max_length=100, blank=True, null=True)
+    bar_council_id = models.CharField(max_length=100, blank=True, null=True)  # legacy / kept for compat
+    enrollment_number = models.CharField(max_length=100, blank=True, null=True)  # e.g. D/1234/2018
+    bar_council = models.CharField(max_length=150, blank=True, null=True)        # e.g. Bar Council of Delhi
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     cases_handled = models.PositiveIntegerField(default=0)
     approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUS_CHOICES, default='pending', blank=True, null=True)
