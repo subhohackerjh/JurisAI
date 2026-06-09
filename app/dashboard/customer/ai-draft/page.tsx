@@ -116,12 +116,12 @@ function DraftingTool({ hasPaid }: { hasPaid: boolean }) {
     setDraftContent('');
     setTab('preview');
     try {
+      const token = localStorage.getItem('accessToken') ?? '';
       const res = await fetch('/api/ai-draft', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-role': 'customer',
-          'x-user-paid': hasPaid ? 'true' : 'false',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ docType, requirements, partiesInfo, additionalContext, userName: user?.name }),
         signal: abortRef.current.signal,

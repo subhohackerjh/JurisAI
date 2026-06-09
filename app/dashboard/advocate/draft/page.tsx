@@ -77,9 +77,13 @@ export default function AdvocateAIDraftPage() {
     abortRef.current = new AbortController();
 
     try {
+      const token = localStorage.getItem('accessToken') ?? '';
       const res = await fetch('/api/ai-draft', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({
           documentType: docType,
           requirements: requirements.trim(),

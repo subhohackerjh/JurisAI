@@ -185,9 +185,15 @@ class HearingDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = HearingSerializer
     lookup_field = 'pk'
-    
+
     def get_queryset(self):
-        return Hearing.objects.all()
+        user = self.request.user
+        if user.role in ['admin', 'police']:
+            return Hearing.objects.all()
+        # Customers and advocates only see hearings for their own cases
+        return Hearing.objects.filter(
+            Q(case__customer=user) | Q(case__advocate=user)
+        )
     
     def perform_update(self, serializer):
         instance = self.get_object()

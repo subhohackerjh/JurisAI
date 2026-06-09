@@ -135,15 +135,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'AI service not configured. Set GROQ_API_KEY in .env' }, { status: 503 });
   }
 
-  // Role gate: advocates always allowed; customers need `paid=true` header set by client
-  // after verifying payment on the backend.
-  const callerRole = request.headers.get('x-user-role') ?? '';
-  const callerPaid = request.headers.get('x-user-paid') === 'true';
-  if (callerRole === 'customer' && !callerPaid) {
-    return NextResponse.json(
-      { error: 'AI document drafting requires a completed payment. Please make a payment first.' },
-      { status: 403 }
-    );
+  // Role gate: verify JWT from Authorization header against Django backend
+  // NEVER trust x-user-role / x-user-paid headers — clients can spoof them
+  const authHeader = request.headers.get('authorization') ?? '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+  }
+  const token = authHeader.slice(7);
+
+  // Verify the token and check payment status server-side
+  let userRole = '';
+  let hasPaid = false;
+  try {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+    // Fetch user profile — validates JWT and returns role
+    const profileRes = await fetch(`${backendUrl}/api/profile/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!profileRes.ok) {
+      return NextResponse.json({ error: 'Invalid or expired session.' }, { status: 401 });
+    }
+    const profile = await profileRes.json();
+    userRole = profile.role ?? '';
+
+    // Customers must have a completed payment verified server-side
+    if (userRole === 'customer') {
+      const paymentsRes = await fetch(`${backendUrl}/api/payments/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (paymentsRes.ok) {
+        const data = await paymentsRes.json();
+        const payments = Array.isArray(data) ? data : (data.results ?? []);
+        hasPaid = payments.some((p: any) => p.status === 'SUCCESS' || p.status === 'completed');
+      }
+      if (!hasPaid) {
+        return NextResponse.json(
+          { error: 'AI document drafting requires a completed payment.' },
+          { status: 403 }
+        );
+      }
+    }
+  } catch {
+    return NextResponse.json({ error: 'Could not verify session.' }, { status: 401 });
   }
 
   try {
