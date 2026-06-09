@@ -111,7 +111,7 @@ export default function DraftingPage() {
               ) : advocates.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No advocates available.</p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {advocates.map(advocate => (
                     <Card 
                       key={advocate.id}

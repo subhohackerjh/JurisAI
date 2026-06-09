@@ -179,13 +179,13 @@ export default function VakalatnamaPage() {
     <div className="min-h-screen bg-background">
       <DashboardHeader user={user} onLogout={logout} />
       <main className="px-4 md:px-6 lg:px-8 py-6 max-w-5xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center">
-            <FileText className="w-6 h-6 text-white" />
+        <div className="flex items-center gap-3 sm:gap-4 mb-6">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Vakalatnama Generator</h1>
-            <p className="text-sm text-muted-foreground">Order III Rule 4 CPC / BNSS §302 — auto-filled, print-ready</p>
+            <h1 className="text-xl sm:text-2xl font-bold">Vakalatnama Generator</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Order III Rule 4 CPC / BNSS §302 — auto-filled, print-ready</p>
           </div>
         </div>
 
@@ -301,7 +301,7 @@ export default function VakalatnamaPage() {
               </div>
             </div>
             <Card className="p-5 bg-white">
-              <pre className="text-xs font-mono whitespace-pre-wrap leading-relaxed text-slate-800 overflow-auto max-h-[680px]">
+              <pre className="text-xs font-mono whitespace-pre-wrap leading-relaxed text-slate-800 overflow-auto max-h-[400px] sm:max-h-[680px]">
                 {text}
               </pre>
             </Card>

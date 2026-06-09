@@ -147,24 +147,24 @@ export default function AdvocateAIDraftPage() {
       <main className="px-4 md:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Wand2 className="w-6 h-6 text-white" />
+        <div className="flex items-start sm:items-center justify-between mb-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+              <Wand2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
+              <h1 className="text-lg sm:text-2xl font-bold flex flex-wrap items-center gap-2">
                 AI Legal Drafter
                 <Badge className="bg-violet-100 text-violet-700 text-xs">Powered by Groq · Free</Badge>
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Generate professional Indian legal documents — IPC, CrPC, Contract Act & more
               </p>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
 
           {/* ── LEFT PANEL: Inputs ──────────────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-5">
@@ -265,23 +265,23 @@ export default function AdvocateAIDraftPage() {
           </div>
 
           {/* ── RIGHT PANEL: Draft Output ───────────────────────────────────── */}
-          <div className="lg:col-span-3">
-            <Card className="flex flex-col h-full min-h-[700px]">
+          <div className="md:col-span-1 lg:col-span-3">
+            <Card className="flex flex-col h-full min-h-[500px] sm:min-h-[700px]">
 
               {/* Toolbar */}
-              <div className="flex items-center justify-between p-4 border-b">
-                <div className="flex items-center gap-2">
-                  <Scale className="w-4 h-4 text-violet-600" />
-                  <h2 className="font-semibold text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 sm:p-4 border-b">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Scale className="w-4 h-4 text-violet-600 shrink-0" />
+                  <h2 className="font-semibold text-xs sm:text-sm truncate">
                     {selectedDoc ? `${selectedDoc.icon} ${selectedDoc.label}` : 'Generated Document'}
                   </h2>
                   {generating && (
-                    <Badge className="bg-violet-100 text-violet-700 text-xs animate-pulse">
+                    <Badge className="bg-violet-100 text-violet-700 text-xs animate-pulse shrink-0">
                       Drafting…
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)}>
                     <TabsList className="h-8">
                       <TabsTrigger value="editor" className="text-xs h-6 px-2">
