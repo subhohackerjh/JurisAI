@@ -27,13 +27,20 @@ export default function LandingPage() {
               </a>
             ))}
           </nav>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link href="/login">
               <span className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer hidden sm:block">Log In</span>
             </Link>
-            <Button className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-full px-6 shadow-md hover:shadow-lg transition-all duration-300">
-              Download App
-            </Button>
+            <Link href="/login">
+              <Button className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-full px-5 shadow-md hover:shadow-lg transition-all duration-300 sm:hidden">
+                Log In
+              </Button>
+            </Link>
+            <Link href="/register" className="hidden sm:block">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-full px-6 shadow-md hover:shadow-lg transition-all duration-300">
+                Get Started
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -348,12 +355,14 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href="/register">
                   <Button size="lg" className="bg-white hover:bg-slate-50 text-indigo-600 font-bold text-lg px-8 py-7 rounded-full shadow-xl hover:shadow-2xl transition-all w-full sm:w-auto hover:-translate-y-0.5">
-                    Download App
+                    Get Started Free
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="border-indigo-400 bg-indigo-700/30 text-white hover:bg-indigo-700/50 font-bold text-lg px-8 py-7 rounded-full w-full sm:w-auto backdrop-blur-sm transition-all hover:-translate-y-0.5">
-                  Sign up on Web
-                </Button>
+                <Link href="/login">
+                  <Button size="lg" variant="outline" className="border-indigo-400 bg-indigo-700/30 text-white hover:bg-indigo-700/50 font-bold text-lg px-8 py-7 rounded-full w-full sm:w-auto backdrop-blur-sm transition-all hover:-translate-y-0.5">
+                    Log In
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
