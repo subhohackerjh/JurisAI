@@ -36,15 +36,17 @@ CHANNEL_LAYERS = {
 }
 
 # ── Database ─────────────────────────────────────────────────────────────────
-# Render provides DATABASE_URL automatically when a PostgreSQL database is attached
+# Uses Supabase connection pooler (IPv4) — direct connection is IPv6 only on free Render
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL', ''),
-        conn_max_age=60,
-        conn_health_checks=True,
+        conn_max_age=0,          # 0 = don't persist connections through pgbouncer
+        conn_health_checks=False,
         ssl_require=True,
     )
 }
+# Required for Supabase pgbouncer in transaction mode
+DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 # ── Caching ───────────────────────────────────────────────────────────────────
 CACHES = {
