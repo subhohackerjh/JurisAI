@@ -371,7 +371,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
             <div className="lg:col-span-1">
               <div className="mb-6">
-                <Legal24Logo href="/" size="lg" className="brightness-0 invert" />
+                <Legal24Logo href="/" size="lg" bg="dark" />
               </div>
               <p className="text-slate-400 text-sm leading-relaxed mb-8 pr-4">
                 Transforming legal engagement for citizens, empowering advocates, and inspiring students across the nation.
