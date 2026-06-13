@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
   try {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
     // Fetch user profile — validates JWT and returns role
-    const profileRes = await fetch(`${backendUrl}/api/profile/`, {
+    const profileRes = await fetch(`${backendUrl}/api/auth/profile/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!profileRes.ok) {

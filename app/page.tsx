@@ -78,12 +78,16 @@ export default function LandingPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white text-base font-semibold px-8 py-6 rounded-full shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-0.5 border border-indigo-500/50">
-                  Get Legal Help <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button size="lg" variant="outline" className="text-slate-700 text-base border-slate-300 hover:bg-slate-100 font-semibold px-8 py-6 rounded-full shadow-sm hover:shadow-md transition-all">
-                  Join as Advocate
-                </Button>
+                <Link href="/login">
+                  <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white text-base font-semibold px-8 py-6 rounded-full shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all hover:-translate-y-0.5 border border-indigo-500/50 w-full sm:w-auto">
+                    Get Legal Help <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button size="lg" variant="outline" className="text-slate-700 text-base border-slate-300 hover:bg-slate-100 font-semibold px-8 py-6 rounded-full shadow-sm hover:shadow-md transition-all w-full sm:w-auto">
+                    Join as Advocate
+                  </Button>
+                </Link>
               </div>
 
               <div className="flex flex-wrap items-center gap-6 pt-8 border-t border-slate-200/60 text-sm font-medium text-slate-600">
@@ -162,9 +166,11 @@ export default function LandingPage() {
                       className="w-full pl-6 pr-24 py-4 bg-slate-50 border border-slate-200 rounded-full text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
                       readOnly
                     />
-                    <Button size="sm" className="absolute right-2 top-2 bottom-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-full font-semibold shadow-md transition-all">
-                      Send
-                    </Button>
+                    <Link href="/login">
+                      <Button size="sm" className="absolute right-2 top-2 bottom-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-full font-semibold shadow-md transition-all">
+                        Send
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -207,9 +213,11 @@ export default function LandingPage() {
                 <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-emerald-400" /> Find Nearby Advocates</li>
                 <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-emerald-400" /> Seamless Secure Payments</li>
               </ul>
-              <Button variant="outline" className="w-full border-slate-600 bg-slate-800/50 hover:bg-indigo-600 hover:border-indigo-600 hover:text-white transition-all text-white rounded-full">
-                Get Legal Help
-              </Button>
+              <Link href="/login" className="block">
+                <Button variant="outline" className="w-full border-slate-600 bg-slate-800/50 hover:bg-indigo-600 hover:border-indigo-600 hover:text-white transition-all text-white rounded-full">
+                  Get Legal Help
+                </Button>
+              </Link>
             </div>
 
             {/* For Advocates */}
@@ -230,9 +238,11 @@ export default function LandingPage() {
                 <li className="flex items-center gap-3 text-white text-sm"><Check className="h-4 w-4 text-emerald-300" /> Next Hearing Reminders</li>
                 <li className="flex items-center gap-3 text-white text-sm"><Check className="h-4 w-4 text-emerald-300" /> Manage Internship Requests</li>
               </ul>
-              <Button className="w-full bg-white text-indigo-700 hover:bg-slate-100 transition-all font-bold rounded-full">
-                Join the Network
-              </Button>
+              <Link href="/register" className="block">
+                <Button className="w-full bg-white text-indigo-700 hover:bg-slate-100 transition-all font-bold rounded-full">
+                  Join the Network
+                </Button>
+              </Link>
             </div>
 
             {/* For Students */}
@@ -250,9 +260,11 @@ export default function LandingPage() {
                 <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-emerald-400" /> One-Click CV Submissions</li>
                 <li className="flex items-center gap-3 text-slate-300 text-sm"><Check className="h-4 w-4 text-emerald-400" /> Direct Advocate Networking</li>
               </ul>
-              <Button variant="outline" className="w-full border-slate-600 bg-slate-800/50 hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-all text-white font-semibold rounded-full">
-                Explore Internships
-              </Button>
+              <Link href="/register" className="block">
+                <Button variant="outline" className="w-full border-slate-600 bg-slate-800/50 hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-all text-white font-semibold rounded-full">
+                  Explore Internships
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
