@@ -6,6 +6,7 @@ export function useAdvocates(params?: {
   specialization?: string;
   availability?: string;
   search?: string;
+  nearby?: boolean;
 }) {
   const [advocates, setAdvocates] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +33,7 @@ export function useAdvocates(params?: {
 
   useEffect(() => {
     fetchAdvocates();
-  }, [params?.specialization, params?.availability, params?.search]);
+  }, [params?.specialization, params?.availability, params?.search, params?.nearby]);
 
   return {
     advocates,

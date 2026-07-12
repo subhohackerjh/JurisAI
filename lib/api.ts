@@ -173,6 +173,9 @@ export const authApi = {
     bar_council_id?: string;
     badge_number?: string;
     station?: string;
+    law_college?: string;
+    year_of_study?: string;
+    graduation_year?: number;
   }) => {
     return apiCall('/auth/register/', {
       method: 'POST',
@@ -248,11 +251,14 @@ export const advocatesApi = {
     specialization?: string;
     availability?: string;
     search?: string;
+    nearby?: boolean;
   }) => {
     const queryString = new URLSearchParams(
-      Object.entries(params || {}).filter(([_, v]) => v !== undefined)
+      Object.entries(params || {})
+        .filter(([_, v]) => v !== undefined)
+        .map(([k, v]) => [k, String(v)])
     ).toString();
-    
+
     return apiCall(`/auth/advocates/${queryString ? `?${queryString}` : ''}`);
   },
 
@@ -745,5 +751,77 @@ export const ecourtsApi = {
 
   cleanupCache: () => {
     cacheService.cleanup();
+  },
+};
+
+// Internships APIs
+export const internshipsApi = {
+  listInternships: async (params?: { practice_area?: string; mine?: boolean }) => {
+    const queryString = new URLSearchParams(
+      Object.entries(params || {})
+        .filter(([_, v]) => v !== undefined)
+        .map(([k, v]) => [k, String(v)])
+    ).toString();
+    return apiCall(`/internships/${queryString ? `?${queryString}` : ''}`);
+  },
+
+  getInternship: async (id: string) => {
+    return apiCall(`/internships/${id}/`);
+  },
+
+  createInternship: async (data: {
+    title: string;
+    description: string;
+    practice_area?: string;
+    duration_months?: number;
+    stipend?: number;
+    openings?: number;
+  }) => {
+    return apiCall('/internships/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateInternship: async (id: string, data: Partial<{
+    title: string;
+    description: string;
+    practice_area: string;
+    duration_months: number;
+    stipend: number;
+    openings: number;
+    status: 'open' | 'closed';
+  }>) => {
+    return apiCall(`/internships/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  apply: async (internshipId: string, formData: FormData) => {
+    return apiCall(`/internships/${internshipId}/apply/`, {
+      method: 'POST',
+      body: formData,
+      headers: {}, // Let apiCall handle headers, but don't set Content-Type for FormData
+    });
+  },
+
+  myApplications: async () => {
+    return apiCall('/internships/applications/');
+  },
+
+  updateApplicationStatus: async (applicationId: string, applicationStatus: 'shortlisted' | 'selected' | 'rejected') => {
+    return apiCall(`/internships/applications/${applicationId}/status/`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: applicationStatus }),
+    });
+  },
+
+  uploadOfferLetter: async (applicationId: string, formData: FormData) => {
+    return apiCall(`/internships/applications/${applicationId}/offer-letter/`, {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    });
   },
 };

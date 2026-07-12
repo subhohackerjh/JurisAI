@@ -1,3 +1,4 @@
+from decimal import Decimal
 from rest_framework import serializers
 from .models import Payment
 
@@ -26,10 +27,11 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 
 class CreatePaymentSerializer(serializers.Serializer):
-    advocate_id = serializers.UUIDField()
+    # No advocate is involved in a platform fee payment (e.g. internship_fee)
+    advocate_id = serializers.UUIDField(required=False, allow_null=True)
     payment_for = serializers.ChoiceField(choices=[
-        'consultation', 'case_filing', 'document_drafting', 'retainer'
+        'consultation', 'case_filing', 'document_drafting', 'retainer', 'internship_fee'
     ])
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value='1')
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('1'))
     case_id = serializers.UUIDField(required=False, allow_null=True)
     description = serializers.CharField(required=False, allow_blank=True, max_length=500)

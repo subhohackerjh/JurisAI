@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value, IntegerField
 
 
 class LoginRateThrottle(AnonRateThrottle):
@@ -100,29 +100,58 @@ class PasswordChangeView(generics.UpdateAPIView):
 class AdvocateListView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
         queryset = User.objects.filter(role='advocate', is_active=True, approval_status='approved')
-        
+
         # Filter by specialization
         specialization = self.request.query_params.get('specialization')
         if specialization:
             queryset = queryset.filter(specialization__icontains=specialization)
-        
+
         # Filter by availability
         availability = self.request.query_params.get('availability')
         if availability:
             queryset = queryset.filter(profile__availability=availability)
-        
+
         # Search by name
         search = self.request.query_params.get('search')
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) | 
+                Q(name__icontains=search) |
                 Q(specialization__icontains=search)
             )
-        
-        return queryset.select_related('profile')
+
+        queryset = queryset.select_related('profile')
+
+        # Nearby matching for students: advocates in the same city first, then same
+        # state, then everyone else. No geolocation — just text match on profile city/state.
+        if self.request.query_params.get('nearby') and self.request.user.role == 'student':
+            student_profile = getattr(self.request.user, 'profile', None)
+            city = student_profile.city if student_profile else None
+            state = student_profile.state if student_profile else None
+
+            annotations = {}
+            order_fields = []
+            if city:
+                annotations['_city_match'] = Case(
+                    When(profile__city__iexact=city, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+                order_fields.append('_city_match')
+            if state:
+                annotations['_state_match'] = Case(
+                    When(profile__state__iexact=state, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+                order_fields.append('_state_match')
+
+            if annotations:
+                queryset = queryset.annotate(**annotations).order_by(*order_fields, '-rating')
+
+        return queryset
 
 
 class AdvocateDetailView(generics.RetrieveAPIView):

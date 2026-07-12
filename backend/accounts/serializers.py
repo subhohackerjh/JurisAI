@@ -22,6 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
             'specialization', 'experience_years', 'bar_council_id',
             'enrollment_number', 'bar_council',
             'rating', 'cases_handled', 'badge_number', 'station',
+            'law_college', 'year_of_study', 'graduation_year',
             'approval_status', 'rejection_reason',
             'is_active', 'date_joined', 'last_login',
             # Profile fields
@@ -78,7 +79,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'email', 'name', 'role', 'phone', 'password', 'password_confirm',
             'specialization', 'experience_years', 'bar_council_id',
             'enrollment_number', 'bar_council',
-            'badge_number', 'station'
+            'badge_number', 'station',
+            'law_college', 'year_of_study', 'graduation_year',
         ]
 
     def validate(self, attrs):
@@ -97,7 +99,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         if role == 'police':
             if not attrs.get('badge_number'):
                 raise serializers.ValidationError("Badge number is required for police officers")
-        
+
+        if role == 'student':
+            if not attrs.get('law_college'):
+                raise serializers.ValidationError("Law college name is required for students")
+
         return attrs
     
     def create(self, validated_data):
@@ -139,6 +145,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'bar_council': user.bar_council,
             'rating': str(user.rating),
             'cases_handled': user.cases_handled,
+            'law_college': user.law_college,
+            'year_of_study': user.year_of_study,
+            'graduation_year': user.graduation_year,
         }
         return data
 
@@ -149,6 +158,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         fields = [
             'name', 'phone', 'specialization', 'experience_years',
             'enrollment_number', 'bar_council',
+            'law_college', 'year_of_study', 'graduation_year',
             'address', 'city', 'state', 'pincode', 'bio', 'consultation_fee'
         ]
     

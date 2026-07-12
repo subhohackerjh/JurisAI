@@ -123,6 +123,19 @@ export default function AdvocateDashboard() {
           ))}
         </div>
 
+        {/* Internships CTA */}
+        <Link href="/dashboard/advocate/internships">
+          <Card className="mb-8 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer">
+            <CardContent className="pt-6 flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <CardTitle className="text-lg mb-1">Internships</CardTitle>
+                <CardDescription>Post internships and review student applicants</CardDescription>
+              </div>
+              <Badge variant="secondary">Manage</Badge>
+            </CardContent>
+          </Card>
+        </Link>
+
         {/* Cases Section */}
         <div className="space-y-6">
           <div>

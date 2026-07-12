@@ -22,6 +22,7 @@ class Payment(models.Model):
         ('case_filing', 'Case Filing Fee'),
         ('document_drafting', 'Document Drafting'),
         ('retainer', 'Retainer Fee'),
+        ('internship_fee', 'Internship Platform Fee'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

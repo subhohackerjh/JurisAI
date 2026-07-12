@@ -134,7 +134,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         from .models import Conversation
         try:
             conv = Conversation.objects.get(id=conversation_id, is_active=True)
-            return (user.role == 'customer' and conv.customer_id == user.id) or \
+            return (user.role in ('customer', 'student') and conv.customer_id == user.id) or \
                    (user.role == 'advocate' and conv.advocate_id == user.id)
         except Conversation.DoesNotExist:
             return False

@@ -11,6 +11,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('customer', 'Customer'),
         ('advocate', 'Advocate'),
         ('police', 'Police Officer'),
+        ('student', 'Law Student'),
         ('admin', 'Admin'),
     ]
     
@@ -39,6 +40,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Police specific fields
     badge_number = models.CharField(max_length=50, blank=True, null=True)
     station = models.CharField(max_length=255, blank=True, null=True)
+
+    # Student specific fields
+    law_college = models.CharField(max_length=255, blank=True, null=True)
+    year_of_study = models.CharField(max_length=50, blank=True, null=True)  # e.g. "3rd Year", "Final Year"
+    graduation_year = models.PositiveIntegerField(blank=True, null=True)
     
     # Common fields
     is_staff = models.BooleanField(default=False)

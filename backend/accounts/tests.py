@@ -91,6 +91,36 @@ class AccountsAPITestCase(TestCase):
         response = self.client.post('/api/auth/register/', data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_register_student(self):
+        """Test student registration is active immediately, no approval gating"""
+        data = {
+            'email': 'newstudent@test.com',
+            'name': 'New Student',
+            'role': 'student',
+            'law_college': 'NLSIU',
+            'year_of_study': '3rd Year',
+            'graduation_year': 2027,
+            'password': 'testpass123',
+            'password_confirm': 'testpass123'
+        }
+        response = self.client.post('/api/auth/register/', data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        new_user = User.objects.get(email='newstudent@test.com')
+        self.assertTrue(new_user.is_active)
+        self.assertEqual(new_user.law_college, 'NLSIU')
+
+    def test_register_student_requires_law_college(self):
+        """Test student registration requires law_college"""
+        data = {
+            'email': 'badstudent@test.com',
+            'name': 'Bad Student',
+            'role': 'student',
+            'password': 'testpass123',
+            'password_confirm': 'testpass123'
+        }
+        response = self.client.post('/api/auth/register/', data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_login_success(self):
         """Test successful login"""
         data = {

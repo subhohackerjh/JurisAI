@@ -35,6 +35,7 @@ urlpatterns = [
     path('api/ecourts/', include('ecourts.urls')),
     path('api/messaging/', include('messaging.urls')),
     path('api/payments/', include('payments.urls')),
+    path('api/internships/', include('internships.urls')),
     path('api/analytics/', include('accounts.analytics_urls')),
 ]
 

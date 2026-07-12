@@ -13,6 +13,7 @@ import hashlib
 import hmac
 import logging
 from datetime import datetime
+from decimal import Decimal
 
 from django.conf import settings
 from django.utils import timezone
@@ -45,12 +46,14 @@ _CF_VERSION = '2023-08-01'
 def _make_order_id():
     return f'L24_{uuid.uuid4().hex[:16].upper()}'
 
+INTERNSHIP_FEE_AMOUNT = 399
+
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def create_payment(request):
     """Create a Cashfree order and return the payment_session_id to the frontend."""
-    if request.user.role != 'customer':
+    if request.user.role not in ('customer', 'student'):
         return Response({'error': 'Only customers can initiate payments'}, status=status.HTTP_403_FORBIDDEN)
 
     ser = CreatePaymentSerializer(data=request.data)
@@ -59,17 +62,35 @@ def create_payment(request):
 
     data = ser.validated_data
 
-    try:
-        advocate = User.objects.get(id=data['advocate_id'], role='advocate', approval_status='approved')
-    except User.DoesNotExist:
-        return Response({'error': 'Advocate not found'}, status=status.HTTP_404_NOT_FOUND)
+    if data['payment_for'] == 'internship_fee':
+        if request.user.role != 'student':
+            return Response({'error': 'Only students can pay the internship platform fee'}, status=status.HTTP_403_FORBIDDEN)
+        if Payment.objects.filter(customer=request.user, payment_for='internship_fee', status='paid').exists():
+            return Response({'error': 'You have already paid the internship platform fee'}, status=status.HTTP_400_BAD_REQUEST)
+        advocate = None
+        # Never trust a client-sent amount for a fixed platform fee — force it server-side,
+        # for both the Cashfree order AND the amount saved on the Payment record.
+        amount_decimal = Decimal(str(INTERNSHIP_FEE_AMOUNT))
+        amount = float(amount_decimal)
+    else:
+        if request.user.role != 'customer':
+            return Response({'error': 'Only customers can make this type of payment'}, status=status.HTTP_403_FORBIDDEN)
+        if not data.get('advocate_id'):
+            return Response({'error': 'advocate_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            advocate = User.objects.get(id=data['advocate_id'], role='advocate', approval_status='approved')
+        except User.DoesNotExist:
+            return Response({'error': 'Advocate not found'}, status=status.HTTP_404_NOT_FOUND)
+        amount_decimal = data['amount']
+        amount = float(amount_decimal)
 
     order_id = _make_order_id()
-    amount = float(data['amount'])
 
     # Build Cashfree order
     customer_details = CustomerDetails(
-        customer_id=str(request.user.id),
+        # Cashfree requires customer_id to be at least 3 characters — raw low-numbered
+        # user ids (1, 2, ...) would otherwise fail validation for early users
+        customer_id=f'user-{request.user.id}',
         customer_phone=request.user.phone or '9999999999',
         customer_email=request.user.email,
         customer_name=request.user.name,
@@ -103,7 +124,7 @@ def create_payment(request):
         payment_for=data['payment_for'],
         case_id=data.get('case_id'),
         description=data.get('description', ''),
-        amount=data['amount'],
+        amount=amount_decimal,
         status='created',
         cf_order_token=cf_data.payment_session_id or '',
     )
@@ -209,7 +230,7 @@ def cashfree_webhook(request):
 def list_payments(request):
     """List payments for the current user."""
     user = request.user
-    if user.role == 'customer':
+    if user.role in ('customer', 'student'):
         payments = Payment.objects.filter(customer=user)
     elif user.role == 'advocate':
         payments = Payment.objects.filter(advocate=user)

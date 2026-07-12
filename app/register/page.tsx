@@ -26,6 +26,9 @@ export default function RegisterPage() {
     bar_council_id: '',
     badge_number: '',
     station: '',
+    law_college: '',
+    year_of_study: '',
+    graduation_year: '',
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +73,12 @@ export default function RegisterPage() {
       if (formData.role === 'police') {
         payload.badge_number = formData.badge_number;
         payload.station = formData.station;
+      }
+
+      if (formData.role === 'student') {
+        payload.law_college = formData.law_college;
+        payload.year_of_study = formData.year_of_study || undefined;
+        payload.graduation_year = formData.graduation_year ? parseInt(formData.graduation_year) : undefined;
       }
 
       const response = await authApi.register(payload);
@@ -182,6 +191,7 @@ export default function RegisterPage() {
                       <SelectItem value="customer">Customer</SelectItem>
                       <SelectItem value="advocate">Advocate</SelectItem>
                       <SelectItem value="police">Police Officer</SelectItem>
+                      <SelectItem value="student">Law Student</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -276,6 +286,49 @@ export default function RegisterPage() {
                         onChange={(e) => handleChange('station', e.target.value)}
                         disabled={isLoading}
                         required
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Student-specific fields */}
+              {formData.role === 'student' && (
+                <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 rounded-lg bg-secondary/20 border border-border">
+                  <h3 className="text-sm font-medium text-foreground">Law Student Details</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
+                      <Label className="text-xs sm:text-sm">Law College *</Label>
+                      <Input
+                        placeholder="e.g., National Law School of India University"
+                        value={formData.law_college}
+                        onChange={(e) => handleChange('law_college', e.target.value)}
+                        disabled={isLoading}
+                        required
+                        className="text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label className="text-xs sm:text-sm">Year of Study</Label>
+                      <Input
+                        placeholder="e.g., 3rd Year"
+                        value={formData.year_of_study}
+                        onChange={(e) => handleChange('year_of_study', e.target.value)}
+                        disabled={isLoading}
+                        className="text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label className="text-xs sm:text-sm">Expected Graduation Year</Label>
+                      <Input
+                        type="number"
+                        placeholder="2027"
+                        value={formData.graduation_year}
+                        onChange={(e) => handleChange('graduation_year', e.target.value)}
+                        disabled={isLoading}
                         className="text-sm"
                       />
                     </div>

@@ -1,5 +1,5 @@
 // User Types
-export type UserRole = 'customer' | 'advocate' | 'police' | 'admin';
+export type UserRole = 'customer' | 'advocate' | 'police' | 'student' | 'admin';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface User {
@@ -21,6 +21,10 @@ export interface User {
   // Police-specific
   badge_number?: string;
   station?: string;
+  // Student-specific
+  law_college?: string;
+  year_of_study?: string;
+  graduation_year?: number;
   // Shared
   approval_status?: ApprovalStatus;
   rejection_reason?: string;
@@ -290,48 +294,43 @@ export interface AvailableCase {
   claimedAt?: string;
 }
 
-// Internship Applications
+// Internships (posted by advocates, applied to by students)
+export type InternshipStatus = 'open' | 'closed';
+
+export interface Internship {
+  id: string;
+  advocate: string;
+  advocate_name: string;
+  advocate_specialization?: string;
+  advocate_rating?: string;
+  title: string;
+  description: string;
+  practice_area?: string;
+  duration_months?: number;
+  stipend?: string | number;
+  openings: number;
+  status: InternshipStatus;
+  applications_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type InternshipApplicationStatus = 'pending' | 'shortlisted' | 'selected' | 'rejected';
+
 export interface InternshipApplication {
   id: string;
-  advocateId: string;
-  studentName: string;
-  studentEmail: string;
-  studentPhone: string;
-  education: string;
-  university: string;
-  year: string;
-  resume: string;
-  coverLetter: string;
-  appliedDate: string;
-  status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
-  experience?: string;
-  skills?: string[];
-}
-
-// Location-based Search
-export interface LocationSearch {
-  latitude: number;
-  longitude: number;
-  radius: number; // in km
-}
-
-export interface NearbyAdvocate {
-  id: string;
-  name: string;
-  specializations: string[];
-  rating: number;
-  experience: number;
-  hourlyRate: number;
-  distance: number; // in km
-  isAvailable: boolean;
-  location: {
-    latitude: number;
-    longitude: number;
-    address: string;
-  };
-  avatar?: string;
-  phone?: string;
-  email: string;
+  internship: string;
+  internship_title?: string;
+  advocate_id?: string;
+  advocate_name?: string;
+  student: User;
+  cv_url?: string;
+  cover_note: string;
+  status: InternshipApplicationStatus;
+  offer_letter_url?: string;
+  offer_sent_at?: string;
+  applied_at: string;
+  updated_at: string;
 }
 
 // AI Chat

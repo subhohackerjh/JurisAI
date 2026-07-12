@@ -16,7 +16,7 @@ def list_conversations(request):
     """List all conversations for the current user"""
     user = request.user
     
-    if user.role == 'customer':
+    if user.role in ('customer', 'student'):
         conversations = Conversation.objects.filter(customer=user, is_active=True)
     elif user.role == 'advocate':
         conversations = Conversation.objects.filter(advocate=user, is_active=True)
@@ -37,14 +37,27 @@ def start_conversation(request, advocate_id):
     """Start a new conversation with an advocate"""
     user = request.user
     
-    if user.role != 'customer':
+    if user.role not in ('customer', 'student'):
         return Response({'error': 'Only customers can start conversations'}, status=status.HTTP_403_FORBIDDEN)
-    
+
     try:
         advocate = User.objects.get(id=advocate_id, role='advocate', approval_status='approved')
     except User.DoesNotExist:
         return Response({'error': 'Advocate not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
+    # Students can only chat with an advocate once selected for an internship —
+    # unlike customers, who can message any approved advocate freely.
+    if user.role == 'student':
+        from internships.models import InternshipApplication
+        selected = InternshipApplication.objects.filter(
+            student=user, internship__advocate=advocate, status='selected'
+        ).exists()
+        if not selected:
+            return Response(
+                {'error': 'Chat unlocks once an advocate selects you for their internship.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
     # Check if conversation already exists
     conversation, created = Conversation.objects.get_or_create(
         customer=user,
@@ -68,7 +81,7 @@ def get_conversation(request, conversation_id):
             'customer__profile', 'advocate__profile'
         ).prefetch_related('messages__sender__profile').get(id=conversation_id, is_active=True)
 
-        if user.role == 'customer' and conversation.customer != user:
+        if user.role in ('customer', 'student') and conversation.customer != user:
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
         elif user.role == 'advocate' and conversation.advocate != user:
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
@@ -90,7 +103,7 @@ def send_message(request, conversation_id):
         conversation = Conversation.objects.get(id=conversation_id, is_active=True)
         
         # Check if user is part of this conversation
-        if user.role == 'customer' and conversation.customer != user:
+        if user.role in ('customer', 'student') and conversation.customer != user:
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
         elif user.role == 'advocate' and conversation.advocate != user:
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
@@ -125,7 +138,7 @@ def mark_messages_read(request, conversation_id):
         conversation = Conversation.objects.get(id=conversation_id, is_active=True)
         
         # Check if user is part of this conversation
-        if user.role == 'customer' and conversation.customer != user:
+        if user.role in ('customer', 'student') and conversation.customer != user:
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
         elif user.role == 'advocate' and conversation.advocate != user:
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)

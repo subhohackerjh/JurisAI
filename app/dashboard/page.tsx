@@ -7,6 +7,7 @@ import CitizenDashboard from '@/components/dashboards/CitizenDashboard';
 import AdvocateDashboard from '@/components/dashboards/AdvocateDashboard';
 import PoliceOfficerDashboard from '@/components/dashboards/PoliceOfficerDashboard';
 import AdminDashboard from '@/components/dashboards/AdminDashboard';
+import StudentDashboard from '@/components/dashboards/StudentDashboard';
 
 export default function DashboardPage() {
   const { session, isLoading } = useAuth();
@@ -50,6 +51,8 @@ export default function DashboardPage() {
       return <AdvocateDashboard />;
     case 'police':
       return <PoliceOfficerDashboard />;
+    case 'student':
+      return <StudentDashboard />;
     case 'admin':
       return <AdminDashboard />;
     default:

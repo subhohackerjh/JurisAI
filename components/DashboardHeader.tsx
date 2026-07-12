@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, LogOut, Menu, X, Home, MessageSquare, FileText, Briefcase, Users, Search, IndianRupee, BarChart2, Wand2, Calculator, Handshake, ChevronDown } from 'lucide-react';
+import { User, LogOut, Menu, X, Home, MessageSquare, FileText, Briefcase, Users, Search, IndianRupee, BarChart2, Wand2, Calculator, Handshake, ChevronDown, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -54,11 +54,21 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
             { href: '/dashboard/advocate/drafts', label: 'Drafts', icon: Briefcase },
             { href: '/dashboard/advocate/draft', label: 'AI Draft', icon: Wand2 },
             { href: '/dashboard/advocate/vakalatnama', label: 'Vakalatnama', icon: FileText },
+            { href: '/dashboard/advocate/internships', label: 'Internships', icon: GraduationCap },
             { href: '/dashboard/chat', label: 'Messages', icon: MessageSquare },
             { href: '/dashboard/ecourts', label: 'eCourts', icon: Search },
             { href: '/dashboard/calculators', label: 'Calculators', icon: Calculator },
             { href: '/dashboard/payments', label: 'Earnings', icon: IndianRupee },
           ]
+        : user.role === 'student'
+          ? [
+              { href: '/dashboard', label: 'Dashboard', icon: Home },
+              { href: '/dashboard/student/internships', label: 'Internships', icon: Search },
+              { href: '/dashboard/student/advocates', label: 'Nearby Advocates', icon: Users },
+              { href: '/dashboard/student/applications', label: 'My Applications', icon: FileText },
+              { href: '/dashboard/chat', label: 'Messages', icon: MessageSquare },
+              { href: '/dashboard/payments', label: 'Payments', icon: IndianRupee },
+            ]
         : user.role === 'admin'
           ? [
               { href: '/dashboard', label: 'Dashboard', icon: Home },

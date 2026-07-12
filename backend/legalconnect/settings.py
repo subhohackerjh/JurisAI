@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'ecourts',
     'messaging',
     'payments',
+    'internships',
 ]
 
 MIDDLEWARE = [
