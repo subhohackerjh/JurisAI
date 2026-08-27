@@ -1,24 +1,20 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReactMarkdown from 'react-markdown';
 import {
-  Lock, Sparkles, FileText, Copy, CheckCheck,
-  Loader2, IndianRupee, Wand2, Eye, PenTool
+  Sparkles, FileText, Copy, CheckCheck,
+  Loader2, Wand2, Eye, PenTool
 } from 'lucide-react';
-import { apiCall } from '@/lib/api';
-import Link from 'next/link';
 import DownloadButton from '@/components/DownloadButton';
 
 const DOCUMENT_TYPES = [
@@ -32,61 +28,8 @@ const DOCUMENT_TYPES = [
   { value: 'affidavit',         label: 'Affidavit',                icon: '📋', desc: 'Oaths Act 1969' },
 ];
 
-// ── Payment Gate ──────────────────────────────────────────────────────────────
-function PaywallCard() {
-  const router = useRouter();
-  return (
-    <div className="min-h-[60vh] flex items-center justify-center px-4">
-      <Card className="p-8 max-w-md w-full text-center border-amber-200 bg-amber-50/40">
-        <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
-          <Lock className="w-8 h-8 text-amber-600" />
-        </div>
-        <h2 className="text-xl font-bold mb-2">AI Drafting is a Paid Feature</h2>
-        <p className="text-muted-foreground text-sm mb-6">
-          Unlock AI-generated legal documents with a one-time payment. Advocates review
-          is always free — or pay to draft instantly yourself.
-        </p>
-
-        <div className="bg-white rounded-xl border p-4 mb-6 text-left space-y-2">
-          <p className="text-sm font-semibold mb-3">What you get:</p>
-          {[
-            '8 document types — notice, contract, will, POA & more',
-            'Powered by Groq AI with full Indian law knowledge',
-            'Instant download — no waiting for advocate',
-            'Unlimited drafts after payment',
-          ].map(f => (
-            <div key={f} className="flex items-start gap-2 text-sm">
-              <span className="text-green-600 mt-0.5">✓</span> {f}
-            </div>
-          ))}
-        </div>
-
-        <Button
-          className="w-full bg-indigo-600 hover:bg-indigo-700 mb-3"
-          onClick={() => router.push('/dashboard/payments')}
-        >
-          <IndianRupee className="w-4 h-4 mr-2" /> Make a Payment to Unlock
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          Already paid?{' '}
-          <button onClick={() => window.location.reload()} className="text-indigo-600 hover:underline">
-            Refresh this page
-          </button>
-        </p>
-
-        <div className="mt-6 pt-4 border-t text-sm text-muted-foreground">
-          Want a human advocate to draft for you instead?{' '}
-          <Link href="/dashboard/advocates" className="text-indigo-600 hover:underline">
-            Find an Advocate →
-          </Link>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
 // ── Drafting UI (same as advocate tool, customer variant) ─────────────────────
-function DraftingTool({ hasPaid }: { hasPaid: boolean }) {
+function DraftingTool() {
   const { user } = useAuth();
   const [docType, setDocType] = useState('notice');
   const [requirements, setRequirements] = useState('');
@@ -151,7 +94,7 @@ function DraftingTool({ hasPaid }: { hasPaid: boolean }) {
     } finally {
       setGenerating(false);
     }
-  }, [docType, requirements, partiesInfo, additionalContext, user?.name, hasPaid]);
+  }, [docType, requirements, partiesInfo, additionalContext, user?.name]);
 
   const copy = async () => {
     if (!draftContent) return;
@@ -274,19 +217,6 @@ function DraftingTool({ hasPaid }: { hasPaid: boolean }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function CustomerAIDraftPage() {
   const { user, logout } = useAuth();
-  const [hasPaid, setHasPaid] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    // Check if user has any completed payment
-    apiCall<any>('/api/payments/', { method: 'GET' })
-      .then((res: any) => {
-        const payments = res?.results ?? res ?? [];
-        const paid = Array.isArray(payments) && payments.some((p: any) => p.status === 'SUCCESS' || p.status === 'completed');
-        setHasPaid(paid);
-      })
-      .catch(() => setHasPaid(false));
-  }, [user]);
 
   if (!user) return null;
 
@@ -301,20 +231,12 @@ export default function CustomerAIDraftPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">AI Legal Document Drafter</h1>
-              {hasPaid === true && <Badge className="bg-green-100 text-green-800 border-green-200">Unlocked</Badge>}
-              {hasPaid === false && <Badge className="bg-amber-100 text-amber-800 border-amber-200">Payment Required</Badge>}
             </div>
             <p className="text-sm text-muted-foreground">Generate professional Indian legal documents instantly with AI</p>
           </div>
         </div>
 
-        {hasPaid === null && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
-          </div>
-        )}
-        {hasPaid === false && <PaywallCard />}
-        {hasPaid === true && <DraftingTool hasPaid={true} />}
+        <DraftingTool />
       </main>
     </div>
   );

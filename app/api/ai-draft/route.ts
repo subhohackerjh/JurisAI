@@ -143,9 +143,7 @@ export async function POST(request: NextRequest) {
   }
   const token = authHeader.slice(7);
 
-  // Verify the token and check payment status server-side
-  let userRole = '';
-  let hasPaid = false;
+  // Verify the token server-side before allowing draft generation.
   try {
     const backendUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
     // Fetch user profile — validates JWT and returns role
@@ -156,25 +154,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired session.' }, { status: 401 });
     }
     const profile = await profileRes.json();
-    userRole = profile.role ?? '';
-
-    // Customers must have a completed payment verified server-side
-    if (userRole === 'customer') {
-      const paymentsRes = await fetch(`${backendUrl}/api/payments/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (paymentsRes.ok) {
-        const data = await paymentsRes.json();
-        const payments = Array.isArray(data) ? data : (data.results ?? []);
-        hasPaid = payments.some((p: any) => p.status === 'SUCCESS' || p.status === 'completed');
-      }
-      if (!hasPaid) {
-        return NextResponse.json(
-          { error: 'AI document drafting requires a completed payment.' },
-          { status: 403 }
-        );
-      }
-    }
   } catch {
     return NextResponse.json({ error: 'Could not verify session.' }, { status: 401 });
   }
