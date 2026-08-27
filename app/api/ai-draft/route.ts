@@ -153,7 +153,6 @@ export async function POST(request: NextRequest) {
     if (!profileRes.ok) {
       return NextResponse.json({ error: 'Invalid or expired session.' }, { status: 401 });
     }
-    const profile = await profileRes.json();
   } catch {
     return NextResponse.json({ error: 'Could not verify session.' }, { status: 401 });
   }
