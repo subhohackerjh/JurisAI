@@ -1,6 +1,6 @@
 /**
  * Legal24 — AI Legal Document Drafting API
- * Powered by Groq (llama-3.3-70b-versatile) — FREE tier
+ * Powered by Groq (openai/gpt-oss-120b)
  *
  * Generates professional Indian legal documents with full knowledge of:
  * - Indian Penal Code, CrPC, CPC, Evidence Act
@@ -17,7 +17,7 @@ if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'gsk_your_key_here
 }
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
 
-const MODEL = 'llama-3.3-70b-versatile';
+const MODEL = 'openai/gpt-oss-120b';
 
 // ── Comprehensive Indian Legal Drafting System Prompt ─────────────────────────
 const DRAFTING_SYSTEM_PROMPT = `You are an expert Indian legal document drafter with 20+ years of experience. You draft professional, legally sound documents following all Indian laws, conventions, and court formats.

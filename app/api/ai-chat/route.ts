@@ -1,6 +1,6 @@
 /**
  * Legal24 AI Chat — powered by Groq (free tier)
- * Model: llama-3.3-70b-versatile  →  fast, accurate, free
+ * Model: openai/gpt-oss-120b
  * Streams Server-Sent Events so the UI feels instant.
  */
 import Groq from 'groq-sdk';
@@ -12,8 +12,7 @@ if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'gsk_your_key_here
 }
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
 
-// Best free Groq model for legal reasoning
-const MODEL = 'llama-3.3-70b-versatile';
+const MODEL = 'openai/gpt-oss-120b';
 
 // ── System prompt: full Indian law context ────────────────────────────────────
 const LEGAL_SYSTEM_PROMPT = `You are LEGAL 24's AI Legal Assistant — an expert in Indian law. You help citizens, advocates, and law students understand their legal rights and options in India.
