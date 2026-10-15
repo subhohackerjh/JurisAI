@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Legal24 Backup and Recovery Script
-# Comprehensive backup and recovery solution for Legal24 production environment
+# JurisAI Backup and Recovery Script
+# Comprehensive backup and recovery solution for JurisAI production environment
 
 set -e
 
@@ -259,7 +259,7 @@ create_manifest() {
     local manifest_file="$backup_path/MANIFEST.txt"
     
     {
-        echo "Legal24 Backup Manifest"
+        echo "JurisAI Backup Manifest"
         echo "======================"
         echo "Created: $(date)"
         echo "Hostname: $(hostname)"
@@ -310,10 +310,10 @@ perform_backup() {
     # Send notification
     if [[ "$errors" -eq 0 ]]; then
         local backup_size=$(du -sh "$backup_path" | cut -f1)
-        send_notification "Legal24 Backup Successful" "Backup completed successfully at $backup_path (Size: $backup_size)"
+        send_notification "JurisAI Backup Successful" "Backup completed successfully at $backup_path (Size: $backup_size)"
         print_status "Full backup completed successfully (Size: $backup_size)"
     else
-        send_notification "Legal24 Backup Failed" "Backup completed with $errors errors at $backup_path"
+        send_notification "JurisAI Backup Failed" "Backup completed with $errors errors at $backup_path"
         print_error "Backup completed with $errors errors"
     fi
     
@@ -487,7 +487,7 @@ main() {
             cleanup_old_backups
             ;;
         "help"|"-h"|"--help")
-            echo "Legal24 Backup and Recovery Script"
+            echo "JurisAI Backup and Recovery Script"
             echo "Usage: $0 [command] [options]"
             echo ""
             echo "Commands:"

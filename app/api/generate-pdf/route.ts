@@ -1,5 +1,5 @@
 /**
- * Legal24 — PDF generator (stamp-paper edition)
+ * JurisAI — PDF generator (stamp-paper edition)
  * pdfkit server-side · A4 · proper stamp paper layout
  */
 import { NextRequest, NextResponse } from 'next/server';
@@ -42,7 +42,7 @@ function drawBorder(doc: InstanceType<typeof PDFDocument>) {
 function drawHeader(doc: InstanceType<typeof PDFDocument>, today: string) {
   const y = 28;
   doc.save();
-  doc.font(SANS_BOLD).fontSize(8).fillColor(INDIGO).text('LEGAL24', ML, y, { continued: true });
+  doc.font(SANS_BOLD).fontSize(8).fillColor(INDIGO).text('JurisAI', ML, y, { continued: true });
   doc.font(SANS).fillColor(GREY).text('  ·  India\'s Legal Services Platform', { continued: true });
   doc.fillColor(LGREY).text('  ' + today, { align: 'right', width: TW });
   doc.moveTo(ML, 42).lineTo(ML + TW, 42).lineWidth(0.3).strokeColor('#DDDDDD').stroke();
@@ -55,7 +55,7 @@ function drawFooter(doc: InstanceType<typeof PDFDocument>, pg: number, total: nu
   doc.moveTo(ML, y - 4).lineTo(ML + TW, y - 4).lineWidth(0.3).strokeColor('#DDDDDD').stroke();
   doc.font(SANS_OBL).fontSize(7).fillColor(LGREY)
      .text(
-       `legal24.in  |  AI-assisted draft — verify with a qualified advocate before use.    Page ${pg} / ${total}`,
+       `JurisAI  |  AI-assisted draft — verify with a qualified advocate before use.    Page ${pg} / ${total}`,
        ML, y, { width: TW, align: 'right' }
      );
   doc.restore();
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
         size: 'A4',
         margins: { top: MT + 24, bottom: MB + 20, left: ML, right: MR },
         bufferPages: true,
-        info: { Title: docTitle, Author: 'Legal24', Creator: 'legal24.in' },
+        info: { Title: docTitle, Author: 'JurisAI', Creator: 'JurisAI' },
       });
 
       doc.on('data',  (c: Buffer) => chunks.push(c));

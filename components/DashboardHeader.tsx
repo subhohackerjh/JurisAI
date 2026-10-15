@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User as UserType } from '@/lib/types';
-import Legal24Logo from './Legal24Logo';
+import JurisAILogo from './JurisAILogo';
 import { cn } from '@/lib/utils';
 
 interface DashboardHeaderProps {
@@ -100,7 +100,7 @@ export default function DashboardHeader({ user, onLogout }: DashboardHeaderProps
   return (
     <header className="border-b border-white/20 bg-white/60 backdrop-blur-2xl sticky top-0 z-50 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
-        <Legal24Logo href="/dashboard" />
+        <JurisAILogo href="/dashboard" />
 
         <nav className="hidden lg:flex items-center gap-1 bg-white/50 px-2 py-1.5 rounded-full border border-slate-200/60 shadow-sm backdrop-blur-md">
           {primaryLinks.map((link) => (

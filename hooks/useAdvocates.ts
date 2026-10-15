@@ -21,8 +21,22 @@ export function useAdvocates(params?: {
       if (response.error) {
         setError(response.error);
       } else if (response.data) {
-        const data = response.data as any;
-        setAdvocates(Array.isArray(data) ? data : data.results ?? []);
+        const data = response.data as unknown;
+        const results = Array.isArray(data)
+          ? data
+          : data && typeof data === 'object' && Array.isArray((data as { results?: unknown }).results)
+            ? (data as { results: User[] }).results
+            : null;
+
+        if (results) {
+          setAdvocates(results as User[]);
+        } else {
+          setAdvocates([]);
+          setError('The server returned an unexpected advocate list response. Please retry.');
+        }
+      } else {
+        setAdvocates([]);
+        setError('The server returned an empty response. Please retry.');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch advocates');

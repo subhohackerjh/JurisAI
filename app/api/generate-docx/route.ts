@@ -1,5 +1,5 @@
 /**
- * Legal24 — DOCX generator (stamp-paper edition)
+ * JurisAI — DOCX generator (stamp-paper edition)
  * A4 · 1.5" side margins · 1" top · 1.5" bottom · Times New Roman 12pt · 1.5× spacing
  */
 import { NextRequest, NextResponse } from 'next/server';
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     const doc = new Document({
       title: docTitle,
-      creator: 'Legal24',
+      creator: 'JurisAI',
       numbering: {
         config: [
           {
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
           default: new Header({
             children: [new Paragraph({
               children: [
-                new TextRun({ text: 'LEGAL24', bold: true, font: 'Arial', size: 16, color: '4338CA' }),
+                new TextRun({ text: 'JurisAI', bold: true, font: 'Arial', size: 16, color: '4338CA' }),
                 new TextRun({ text: '  ·  India\'s Legal Services Platform', font: 'Arial', size: 15, color: '888888' }),
                 new TextRun({ text: '\t' + today, font: 'Arial', size: 15, color: '888888' }),
               ],
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
           default: new Footer({
             children: [new Paragraph({
               children: [
-                new TextRun({ text: 'legal24.in  |  AI-assisted draft — verify with a qualified advocate before use.', font: 'Arial', size: 15, color: '999999', italics: true }),
+                new TextRun({ text: 'JurisAI  |  AI-assisted draft — verify with a qualified advocate before use.', font: 'Arial', size: 15, color: '999999', italics: true }),
                 new TextRun({ text: '\tPage ', font: 'Arial', size: 15, color: '999999' }),
                 new TextRun({ children: [PageNumber.CURRENT], font: 'Arial', size: 15, color: '999999' }),
                 new TextRun({ text: ' / ', font: 'Arial', size: 15, color: '999999' }),

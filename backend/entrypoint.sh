@@ -4,13 +4,13 @@
 
 set -e
 
-echo "==> [legal24-backend] Running database migrations..."
+echo "==> [JurisAI-backend] Running database migrations..."
 python manage.py migrate --noinput
 
-echo "==> [legal24-backend] Collecting static files..."
+echo "==> [JurisAI-backend] Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
-echo "==> [legal24-backend] Starting Daphne ASGI server on port ${PORT:-8000}..."
+echo "==> [JurisAI-backend] Starting Daphne ASGI server on port ${PORT:-8000}..."
 exec daphne \
   -b 0.0.0.0 \
   -p "${PORT:-8000}" \

@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import Legal24Logo from '@/components/Legal24Logo';
+import JurisAILogo from '@/components/JurisAILogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, FileText, MessageSquare, Shield, ArrowRight, Scale, Gavel, Clock, Award, GraduationCap, Briefcase, Handshake, MapPin, Sparkles, LineChart, Lock, Quote, Check, Mail, Phone, Send, Facebook, Linkedin, Instagram, Bot, ChevronRight } from 'lucide-react';
+import { Users, FileText, MessageSquare, Shield, ArrowRight, Scale, Gavel, Clock, Award, GraduationCap, Briefcase, Handshake, MapPin, Sparkles, LineChart, Lock, Quote, Check, Mail, Phone, Send, Bot, ChevronRight } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -14,7 +14,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="border-b border-white/20 bg-white/60 backdrop-blur-2xl sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <Legal24Logo href="/" size="md" />
+          <JurisAILogo href="/" size="md" />
           <nav className="hidden md:flex items-center gap-8 bg-white/50 px-6 py-2 rounded-full border border-slate-200/60 shadow-sm backdrop-blur-md">
             {['Ecosystem', 'Features', 'Reviews'].map((item) => (
               <a key={item} href={`#${item.toLowerCase().replace(/ /g, '-')}`} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors relative group">
@@ -74,7 +74,7 @@ export default function LandingPage() {
               </h1>
 
               <p className="text-xl text-slate-600 leading-relaxed font-medium max-w-xl">
-                Legal24 delivers instant, highly accurate AI legal advice by referencing real court cases and law books before you even hire a lawyer. We dynamically connect citizens to advocates, while empowering law students with renowned internships.
+                JurisAI delivers instant, highly accurate AI legal advice by referencing real court cases and law books before you even hire a lawyer. We dynamically connect citizens to advocates, while empowering law students with renowned internships.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -116,7 +116,7 @@ export default function LandingPage() {
                       <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full"></div>
                     </div>
                     <div>
-                      <h3 className="text-slate-900 font-bold text-lg leading-tight">Legal24 Assistant</h3>
+                      <h3 className="text-slate-900 font-bold text-lg leading-tight">JurisAI Assistant</h3>
                       <p className="text-slate-500 text-xs font-semibold flex items-center gap-1">
                         <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                         Online &middot; AI Triage
@@ -162,7 +162,7 @@ export default function LandingPage() {
                   <div className="relative group">
                     <input
                       type="text"
-                      placeholder="Ask Legal24 anything..."
+                      placeholder="Ask JurisAI anything..."
                       className="w-full pl-6 pr-24 py-4 bg-slate-50 border border-slate-200 rounded-full text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
                       readOnly
                     />
@@ -186,13 +186,13 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-6">
-                The Legal24 Ecosystem
+                The JurisAI Ecosystem
               </div>
               <h2 className="text-4xl sm:text-5xl font-bold mb-4 tracking-tight leading-tight">
                 Designed for everyone. <br /><span className="text-indigo-400">Powered by connectivity.</span>
               </h2>
               <p className="text-slate-400 text-lg">
-                Whether you need legal help, want to take on cases, or are looking to start your legal career, Legal24 is your dedicated partner.
+                Whether you need legal help, want to take on cases, or are looking to start your legal career, JurisAI is your dedicated partner.
               </p>
             </div>
           </div>
@@ -278,7 +278,7 @@ export default function LandingPage() {
               A unified system , <span className="text-indigo-600">built for speed.</span>
             </h2>
             <p className="text-lg text-slate-600">
-              Legal24 replaces fragmented processes with a seamless, tech-forward experience.
+              JurisAI replaces fragmented processes with a seamless, tech-forward experience.
             </p>
           </div>
 
@@ -325,7 +325,7 @@ export default function LandingPage() {
                 author: "Rohan V.", role: "Citizen & Client", initial: "R"
               },
               {
-                text: "Finding an internship used to mean walking door-to-door to chambers. Legal24 let me upload my CV and secure a placement at a top firm in days.",
+                text: "Finding an internship used to mean walking door-to-door to chambers. JurisAI let me upload my CV and secure a placement at a top firm in days.",
                 author: "Priya Desai", role: "3rd Year Law Student", initial: "P"
               }
             ].map((test, i) => (
@@ -358,7 +358,7 @@ export default function LandingPage() {
                 Ready to Join the Revolution?
               </h2>
               <p className="text-lg text-indigo-100 mb-10 max-w-2xl mx-auto font-medium">
-                Whether you're seeking justice, offering legal expertise, or starting your learning journey, Legal24 is built for you.
+                Whether you're seeking justice, offering legal expertise, or starting your learning journey, JurisAI is built for you.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link href="/register">
@@ -383,17 +383,11 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
             <div className="lg:col-span-1">
               <div className="mb-6">
-                <Legal24Logo href="/" size="lg" bg="dark" />
+                <JurisAILogo href="/" size="lg" />
               </div>
               <p className="text-slate-400 text-sm leading-relaxed mb-8 pr-4">
                 Transforming legal engagement for citizens, empowering advocates, and inspiring students across the nation.
               </p>
-              <div className="flex gap-4">
-                <a href="https://www.facebook.com/share/1D6qJEq2zW/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all hover:scale-110"><Facebook className="h-4 w-4" /></a>
-                <a href="https://www.linkedin.com/company/legal24.in" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all hover:scale-110"><Linkedin className="h-4 w-4" /></a>
-                <a href="https://www.instagram.com/legal24.in" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all hover:scale-110"><Instagram className="h-4 w-4" /></a>
-                <a href="https://t.me/legal24in" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all hover:scale-110"><Send className="h-4 w-4" /></a>
-              </div>
             </div>
             <div>
               <h4 className="text-white font-bold mb-6 tracking-wide">Platform</h4>
@@ -407,14 +401,14 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-bold mb-6 tracking-wide">Contact</h4>
               <ul className="space-y-4 text-sm font-medium">
-                <li className="flex items-center gap-3 text-slate-400"><Mail className="h-4 w-4 text-indigo-400" /> info@legal24.in</li>
-                <li className="flex items-center gap-3 text-slate-400"><Phone className="h-4 w-4 text-indigo-400" /> +91 96632 02292</li>
-                <li className="flex items-start gap-3 text-slate-400"><MapPin className="h-5 w-5 text-indigo-400 shrink-0" /> <span className="text-xs leading-relaxed max-w-[200px]">#51 Chokkanahalli, Yenigadale post, Chintamani Taluk, Karnataka - 563125</span></li>
+                <li className="flex items-center gap-3 text-slate-400"><Mail className="h-4 w-4 text-indigo-400" /> sg8293104@gmail.com</li>
+                <li className="flex items-center gap-3 text-slate-400"><Phone className="h-4 w-4 text-indigo-400" /> +91 8293104191</li>
+                <li className="flex items-start gap-3 text-slate-400"><MapPin className="h-5 w-5 text-indigo-400 shrink-0" /> <span className="text-xs leading-relaxed max-w-[200px]">Devanahalli,Bengaluru,Karnataka - 562110</span></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-500">
-            <p>© 2026 Legal24. All rights reserved.</p>
+            <p>© 2026 JurisAI. All rights reserved.</p>
             <p className="flex items-center gap-2">Built for normal people for their help in law.</p>
           </div>
         </div>

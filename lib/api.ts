@@ -3,7 +3,10 @@
 import { cacheService } from './cache';
 import { debouncePromise, memoizeAsync } from './debounce';
 
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api`;
+const API_ORIGIN = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
+  .replace(/\/+$/, '')
+  .replace(/\/api$/i, '');
+const API_BASE_URL = `${API_ORIGIN}/api`;
 
 interface ApiResponse<T> {
   data?: T;
@@ -155,6 +158,11 @@ export async function apiCall<T>(
 
     return parseResponse<T>(response);
   } catch (error) {
+    if (error instanceof TypeError) {
+      return {
+        error: `Cannot reach the backend at ${API_ORIGIN}. Start the local Django server and check that this origin is reachable from your browser.`,
+      };
+    }
     return { error: error instanceof Error ? error.message : 'Network error' };
   }
 }

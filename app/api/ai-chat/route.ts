@@ -1,5 +1,5 @@
 /**
- * Legal24 AI Chat — powered by Groq (free tier)
+ * JurisAI AI Chat — powered by Groq (free tier)
  * Model: openai/gpt-oss-120b
  * Streams Server-Sent Events so the UI feels instant.
  */
@@ -15,7 +15,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
 const MODEL = 'openai/gpt-oss-120b';
 
 // ── System prompt: full Indian law context ────────────────────────────────────
-const LEGAL_SYSTEM_PROMPT = `You are LEGAL 24's AI Legal Assistant — an expert in Indian law. You help citizens, advocates, and law students understand their legal rights and options in India.
+const LEGAL_SYSTEM_PROMPT = `You are JurisAI's AI Legal Assistant — an expert in Indian law. You help citizens, advocates, and law students understand their legal rights and options in India.
 
 Your expertise covers:
 - Constitution of India — Fundamental Rights (Articles 12-35), DPSPs, Fundamental Duties
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     // Build system prompt with optional context
     let systemPrompt = LEGAL_SYSTEM_PROMPT;
     if (context?.userRole) {
-      systemPrompt += `\n\nThe current user's role on the Legal24 platform is: ${context.userRole}`;
+      systemPrompt += `\n\nThe current user's role on the JurisAI platform is: ${context.userRole}`;
     }
     if (context?.ecourtsCaseData) {
       systemPrompt += `\n\nContext — user has loaded this eCourts case:\n${JSON.stringify(context.ecourtsCaseData, null, 2)}`;

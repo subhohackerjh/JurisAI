@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-**Legal24.in** (internally `legalconnect`) — a legal services marketplace connecting
+**JurisAI** (internally `legalconnect`) — a legal services marketplace connecting
 **Customers** with **Advocates**, with a **Police Officer** role for station-level case
 tracking and an **Admin** role for approvals/moderation. Four dashboards, one codebase.
 
-This is a real, deployed product (Render, `legal24.in`), not a prototype — treat data
+This is a real, deployed product (Render, `JurisAI`), not a prototype — treat data
 integrity, auth, and payment code with production care. The root `README.md` describes an
 early mock-data MVP; **ignore it**, it's stale. The actual system has a Django API, Postgres,
 Redis, real JWT auth, Cashfree payments, and Groq-powered AI drafting/chat.
@@ -34,7 +34,7 @@ backend/           Django + DRF project (`legalconnect`), deploys as a separate 
 ```
 
 The frontend and backend are two independently deployed Render services
-(`legal24` and `legal24-api`, see `render.yaml`) talking over HTTPS + WSS. Treat the
+(`JurisAI` and `JurisAI-api`, see `render.yaml`) talking over HTTPS + WSS. Treat the
 API contract (endpoint shapes, JWT claims, role strings) as a real versioned boundary.
 
 ## Commands
@@ -143,7 +143,7 @@ access itself goes through `DATABASE_URL`), `CORS_ALLOWED_ORIGINS`, `SENTRY_DSN`
 
 ## Deployment
 
-Render Blueprint (`render.yaml`): 4 services — Postgres, Redis, `legal24-api` (Django/Daphne,
-`backend/Dockerfile`), `legal24` (Next.js, root `Dockerfile`, standalone output). Free tier by
+Render Blueprint (`render.yaml`): 4 services — Postgres, Redis, `JurisAI-api` (Django/Daphne,
+`backend/Dockerfile`), `JurisAI` (Next.js, root `Dockerfile`, standalone output). Free tier by
 default (spins down when idle) — starter plan needed for always-on/persistent storage.
 `docker-compose.yml` mirrors this topology exactly for local dev.

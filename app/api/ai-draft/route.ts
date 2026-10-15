@@ -1,5 +1,5 @@
 /**
- * Legal24 — AI Legal Document Drafting API
+ * JurisAI — AI Legal Document Drafting API
  * Powered by Groq (openai/gpt-oss-120b)
  *
  * Generates professional Indian legal documents with full knowledge of:

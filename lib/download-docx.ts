@@ -1,5 +1,5 @@
 /**
- * Downloads content as a formatted Legal24 .docx file.
+ * Downloads content as a formatted JurisAI .docx file.
  * Calls /api/generate-docx on the server which uses the docx library.
  */
 export async function downloadAsDocx(

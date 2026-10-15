@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Legal24 Production Monitoring Script
-# This script monitors the health and performance of the Legal24 application
+# JurisAI Production Monitoring Script
+# This script monitors the health and performance of the JurisAI application
 
 set -e
 
@@ -45,7 +45,7 @@ send_alert() {
     
     # Send email alert
     if command -v mail >/dev/null 2>&1; then
-        echo "$message" | mail -s "Legal24 Alert [$severity]" $ALERT_EMAIL
+        echo "$message" | mail -s "JurisAI Alert [$severity]" $ALERT_EMAIL
     fi
     
     # Send Slack webhook
@@ -221,7 +221,7 @@ generate_health_report() {
     local report_file="/var/log/legal24/health_report_$(date +%Y%m%d_%H%M%S).txt"
     
     {
-        echo "Legal24 Health Report"
+        echo "JurisAI Health Report"
         echo "======================="
         echo "Generated: $(date)"
         echo "Hostname: $(hostname)"
@@ -256,7 +256,7 @@ generate_health_report() {
 
 # Main monitoring function
 run_monitoring() {
-    print_info "Starting Legal24 monitoring check..."
+    print_info "Starting JurisAI monitoring check..."
     
     local issues=0
     
@@ -333,7 +333,7 @@ case "${1:-check}" in
         tail -20 /var/log/legal24/django-error.log
         ;;
     "help"|"-h"|"--help")
-        echo "Legal24 Monitoring Script"
+        echo "JurisAI Monitoring Script"
         echo "Usage: $0 [command]"
         echo ""
         echo "Commands:"

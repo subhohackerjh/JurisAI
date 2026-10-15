@@ -231,6 +231,23 @@ class AccountsAPITestCase(TestCase):
         self.assertIn('results', response.data)
         self.assertIsInstance(response.data['results'], list)
 
+    def test_list_advocates_availability_filter_is_case_insensitive(self):
+        """UI sends lowercase availability values; profile defaults are title case."""
+        self.client.force_authenticate(user=self.customer_user)
+        response = self.client.get('/api/auth/advocates/?availability=available')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(self.advocate_user.id, [item['id'] for item in response.data['results']])
+
+    def test_list_advocates_empty_filter_returns_empty_results(self):
+        self.client.force_authenticate(user=self.customer_user)
+        response = self.client.get('/api/auth/advocates/?specialization=NoSuchSpecialization')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 0)
+
+    def test_list_advocates_requires_authentication(self):
+        response = self.client.get('/api/auth/advocates/')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_list_pending_advocates_admin(self):
         """Test admin can list pending advocates"""
         self.client.force_authenticate(user=self.admin_user)

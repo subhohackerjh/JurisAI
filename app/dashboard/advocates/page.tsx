@@ -18,7 +18,7 @@ export default function AdvocatesPage() {
   const [specialization, setSpecialization] = useState('');
   const [availability, setAvailability] = useState('');
 
-  const { advocates, isLoading, error } = useAdvocates({
+  const { advocates, isLoading, error, refetch } = useAdvocates({
     search: search || undefined,
     specialization: specialization || undefined,
     availability: availability || undefined,
@@ -56,12 +56,12 @@ export default function AdvocatesPage() {
 
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground">Specialization</label>
-              <Select value={specialization} onValueChange={setSpecialization}>
+              <Select value={specialization} onValueChange={(value) => setSpecialization(value === 'all' ? '' : value)}>
                 <SelectTrigger className="text-sm">
                   <SelectValue placeholder="All specializations" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All specializations</SelectItem>
+                  <SelectItem value="all">All specializations</SelectItem>
                   <SelectItem value="Criminal Law">Criminal Law</SelectItem>
                   <SelectItem value="Civil Law">Civil Law</SelectItem>
                   <SelectItem value="Family Law">Family Law</SelectItem>
@@ -73,12 +73,12 @@ export default function AdvocatesPage() {
 
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground">Availability</label>
-              <Select value={availability} onValueChange={setAvailability}>
+              <Select value={availability} onValueChange={(value) => setAvailability(value === 'all' ? '' : value)}>
                 <SelectTrigger className="text-sm">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
                   <SelectItem value="available">Available</SelectItem>
                   <SelectItem value="busy">Busy</SelectItem>
                 </SelectContent>
@@ -88,13 +88,18 @@ export default function AdvocatesPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/30 flex gap-2">
-            <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-destructive">{error}</p>
+          <div role="alert" className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/30 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-start gap-2 flex-1">
+              <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-destructive">Could not load advocates: {error}</p>
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => void refetch()} disabled={isLoading}>
+              {isLoading ? 'Retrying…' : 'Retry'}
+            </Button>
           </div>
         )}
 
-        {isLoading ? (
+        {error ? null : isLoading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading advocates...</p>
           </div>

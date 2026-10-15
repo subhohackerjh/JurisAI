@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, Shield } from 'lucide-react';
 import { authApi } from '@/lib/api';
-import Legal24Logo from '@/components/Legal24Logo';
+import JurisAILogo from '@/components/JurisAILogo';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -32,6 +32,7 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const submitting = useRef(false);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -39,15 +40,19 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setError('');
 
     if (formData.password !== formData.password_confirm) {
       setError('Passwords do not match');
+      submitting.current = false;
       return;
     }
 
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters');
+      submitting.current = false;
       return;
     }
 
@@ -93,6 +98,7 @@ export default function RegisterPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
+      submitting.current = false;
       setIsLoading(false);
     }
   };
@@ -118,7 +124,7 @@ export default function RegisterPage() {
       <div className="relative z-10 w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <Legal24Logo href="/" />
+            <JurisAILogo href="/" />
           </div>
           <p className="text-slate-600 font-medium text-sm">Join India&apos;s unified legal network</p>
         </div>

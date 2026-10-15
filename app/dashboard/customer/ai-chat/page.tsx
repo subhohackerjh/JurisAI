@@ -38,7 +38,7 @@ export default function AIChatPage() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `**Welcome to LEGAL 24 AI Assistant!** 👋
+      content: `**Welcome to JurisAI AI Assistant!** 👋
 
 I'm powered by Claude AI and trained on Indian law. I can help you with:
 

@@ -25,10 +25,33 @@ LegalConnect is a comprehensive legal services platform featuring:
 git clone <repository>
 cd legalconnect
 pnpm install
-
-# Start development server
-pnpm dev
 ```
+
+The app has a Next.js frontend and a separate Django API. Run each in a
+separate terminal. Start the backend first. On Windows, use the helper script
+so the local server runs with development settings (including HTTP rather than
+an HTTPS redirect):
+
+```powershell
+cd backend
+.\run_local.ps1 -Port 8001
+```
+
+The script sets `DEBUG=True` for its server process, applies local database
+migrations, and starts Django on the selected port (8001 in this example). If dependencies are not installed,
+create/activate a Python 3.13 virtual environment and install
+`requirements-local.txt` first.
+
+Then, in a second terminal from the project root:
+
+```powershell
+npm install
+npm run dev
+```
+
+The frontend sends registration and login requests to
+`http://localhost:8001/api/auth/`. `NEXT_PUBLIC_API_URL` must be the backend
+origin only (for example, `http://localhost:8001`); the frontend adds `/api`.
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 

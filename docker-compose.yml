@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Legal24 — Local development with Docker Compose
+# JurisAI — Local development with Docker Compose
 # Mirrors the production Render setup (Postgres + Redis + Django + Next.js)
 #
 # Usage:

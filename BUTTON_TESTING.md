@@ -11,7 +11,6 @@ Quick reference for testing all buttons and interactive elements in LegalConnect
 | "Explore Advocates" (hero) | Navigate to /login | ✅ |
 | "File a Case" (hero) | Navigate to /login | ✅ |
 | "Start Now" (CTA section) | Navigate to /login | ✅ |
-| Social links (footer) | Navigate to social sites | ✅ |
 
 ## 🔐 Login Page Buttons
 

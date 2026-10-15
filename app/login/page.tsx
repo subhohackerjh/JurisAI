@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -8,18 +8,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import Legal24Logo from '@/components/Legal24Logo';
+import JurisAILogo from '@/components/JurisAILogo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const submitting = useRef(false);
   const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setError('');
     setIsLoading(true);
 
@@ -29,6 +32,7 @@ export default function LoginPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
+      submitting.current = false;
       setIsLoading(false);
     }
   };
@@ -54,7 +58,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <Legal24Logo href="/" />
+            <JurisAILogo href="/" />
           </div>
           <p className="text-slate-600 font-medium text-sm">India&apos;s unified legal network</p>
         </div>

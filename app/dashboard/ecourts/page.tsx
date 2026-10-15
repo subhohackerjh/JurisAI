@@ -196,10 +196,10 @@ export default function ECourtsPage() {
 
             <div className="border-t pt-4">
               <p className="text-sm text-muted-foreground mb-3">
-                Import this case into Legal24 to track hearings, upload documents, and manage it through our platform.
+                Import this case into JurisAI to track hearings, upload documents, and manage it through our platform.
               </p>
               <Button onClick={handleImport} disabled={importing} className="w-full">
-                {importing ? 'Importing...' : <><Download className="w-4 h-4 mr-2" /> Import Case into Legal24</>}
+                {importing ? 'Importing...' : <><Download className="w-4 h-4 mr-2" /> Import Case into JurisAI</>}
               </Button>
             </div>
           </Card>

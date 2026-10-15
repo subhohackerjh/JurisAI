@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Legal24 — Next.js Frontend
+# JurisAI — Next.js Frontend
 # Uses Next.js standalone output for a minimal production image (~300 MB)
 # Target: Render Web Service
 # ─────────────────────────────────────────────────────────────────────────────

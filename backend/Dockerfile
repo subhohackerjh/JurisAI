@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Legal24 — Django Backend (Daphne ASGI + WebSocket)
+# JurisAI — Django Backend (Daphne ASGI + WebSocket)
 # Target: Render Web Service
 # ─────────────────────────────────────────────────────────────────────────────
 

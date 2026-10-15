@@ -1,7 +1,7 @@
-# Legal24 API Test Report
+# JurisAI API Test Report
 
 **Generated:** April 30, 2026  
-**Project:** Legal24 - Legal Services Platform  
+**Project:** JurisAI - Legal Services Platform
 **Backend:** Django REST Framework  
 **Frontend:** Next.js with TypeScript
 
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This report documents all API endpoints in the Legal24 platform, including backend Django REST Framework endpoints and frontend API service layer integration. Test cases have been created for both backend and frontend to ensure proper functionality.
+This report documents all API endpoints in the JurisAI platform, including backend Django REST Framework endpoints and frontend API service layer integration. Test cases have been created for both backend and frontend to ensure proper functionality.
 
 ### Test Coverage Summary
 
@@ -420,7 +420,7 @@ npm test
 
 ## Conclusion
 
-The Legal24 platform has a comprehensive API structure with 39 backend endpoints and 37 frontend API functions. Test coverage has been established for critical endpoints, particularly:
+The JurisAI platform has a comprehensive API structure with 39 backend endpoints and 37 frontend API functions. Test coverage has been established for critical endpoints, particularly:
 
 - ✅ User authentication and registration
 - ✅ Advocate approval workflow

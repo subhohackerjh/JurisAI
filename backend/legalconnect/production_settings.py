@@ -1,5 +1,5 @@
 """
-Production settings for Legal24.
+Production settings for JurisAI.
 Loaded when DJANGO_SETTINGS_MODULE=legalconnect.production_settings
 All sensitive values come from environment variables — never hardcoded.
 """

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Legal24 Production Setup Script
-# This script sets up the production environment for Legal24
+# JurisAI Production Setup Script
+# This script sets up the production environment for JurisAI
 
 set -e  # Exit on any error
 
@@ -291,7 +291,7 @@ setup_systemd_services() {
     # Create Gunicorn service
     sudo tee /etc/systemd/system/legal24-backend.service > /dev/null << EOF
 [Unit]
-Description=Legal24 Backend
+Description=JurisAI Backend
 After=network.target postgresql.service redis.service
 
 [Service]
@@ -311,7 +311,7 @@ EOF
     # Create frontend service
     sudo tee /etc/systemd/system/legal24-frontend.service > /dev/null << EOF
 [Unit]
-Description=Legal24 Frontend
+Description=JurisAI Frontend
 After=network.target
 
 [Service]
@@ -338,7 +338,7 @@ EOF
 
 # Main function
 main() {
-    print_status "Starting Legal24 production setup..."
+    print_status "Starting JurisAI production setup..."
     
     # Check prerequisites
     check_root

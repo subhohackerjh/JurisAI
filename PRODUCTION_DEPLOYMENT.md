@@ -1,4 +1,4 @@
-# Legal24 Production Deployment Guide
+# JurisAI Production Deployment Guide
 
 **Updated:** April 30, 2026  
 **Version:** 1.0.0  
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Legal24 is a full-stack legal services platform with Django backend and Next.js frontend. This guide covers complete production deployment including security, monitoring, and maintenance procedures.
+JurisAI is a full-stack legal services platform with Django backend and Next.js frontend. This guide covers complete production deployment including security, monitoring, and maintenance procedures.
 
 ## Architecture
 
@@ -59,8 +59,8 @@ SECRET_KEY=your-super-secret-key-here
 ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
 
 # Database
-DB_NAME=legal24_prod
-DB_USER=legal24_user
+DB_NAME=JurisAI_prod
+DB_USER=JurisAI_user
 DB_PASSWORD=secure_password
 DB_HOST=localhost
 DB_PORT=5432
@@ -86,8 +86,8 @@ ECOURTS_API_KEY=your-ecourts-api-key
 ECOURTS_BASE_URL=https://api.ecourts.gov.in
 
 # Media Files
-MEDIA_ROOT=/var/www/legal24/media
-STATIC_ROOT=/var/www/legal24/static
+MEDIA_ROOT=/var/www/JurisAI/media
+STATIC_ROOT=/var/www/JurisAI/static
 
 # CORS
 CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
@@ -124,9 +124,9 @@ sudo apt install postgresql postgresql-contrib
 
 # Create database and user
 sudo -u postgres psql
-CREATE DATABASE legal24_prod;
-CREATE USER legal24_user WITH PASSWORD 'secure_password';
-GRANT ALL PRIVILEGES ON DATABASE legal24_prod TO legal24_user;
+CREATE DATABASE JurisAI_prod;
+CREATE USER JurisAI_user WITH PASSWORD 'secure_password';
+GRANT ALL PRIVILEGES ON DATABASE JurisAI_prod TO JurisAI_user;
 \q
 ```
 
@@ -138,7 +138,7 @@ sudo nano /etc/postgresql/14/main/postgresql.conf
 # Set: listen_addresses = 'localhost'
 
 sudo nano /etc/postgresql/14/main/pg_hba.conf
-# Add: local   legal24_prod   legal24_user   md5
+# Add: local   JurisAI_prod   JurisAI_user   md5
 
 sudo systemctl restart postgresql
 ```
@@ -168,9 +168,9 @@ sudo systemctl enable redis-server
 
 ```bash
 cd /var/www
-sudo git clone https://github.com/your-username/legal24.git
-sudo chown -R $USER:$USER legal24
-cd legal24
+sudo git clone https://github.com/your-username/JurisAI.git
+sudo chown -R $USER:$USER JurisAI
+cd JurisAI
 ```
 
 ### 2. Backend Setup
@@ -236,8 +236,8 @@ services:
   db:
     image: postgres:14
     environment:
-      POSTGRES_DB: legal24_prod
-      POSTGRES_USER: legal24_user
+      POSTGRES_DB: JurisAI_prod
+      POSTGRES_USER: JurisAI_user
       POSTGRES_PASSWORD: secure_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -497,10 +497,10 @@ Create `ecosystem.config.js`:
 module.exports = {
   apps: [
     {
-      name: 'legal24-backend',
+      name: 'JurisAI-backend',
       script: 'gunicorn',
       args: '--bind 0.0.0.0:8000 legalconnect.wsgi:application',
-      cwd: '/var/www/legal24/backend',
+      cwd: '/var/www/JurisAI/backend',
       instances: 2,
       exec_mode: 'cluster',
       autorestart: true,
@@ -511,10 +511,10 @@ module.exports = {
       }
     },
     {
-      name: 'legal24-frontend',
+      name: 'JurisAI-frontend',
       script: 'npm',
       args: 'start',
-      cwd: '/var/www/legal24',
+      cwd: '/var/www/JurisAI',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -565,7 +565,7 @@ LOGGING = {
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/var/log/legal24/django.log',
+            'filename': '/var/log/JurisAI/django.log',
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,
             'formatter': 'verbose',
@@ -573,7 +573,7 @@ LOGGING = {
         'error_file': {
             'level': 'ERROR',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/var/log/legal24/django-error.log',
+            'filename': '/var/log/JurisAI/django-error.log',
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,
             'formatter': 'verbose',
@@ -585,7 +585,7 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'legal24': {
+        'JurisAI': {
             'handlers': ['file', 'error_file'],
             'level': 'INFO',
             'propagate': True,
@@ -597,8 +597,8 @@ LOGGING = {
 ### Create Log Directories
 
 ```bash
-sudo mkdir -p /var/log/legal24
-sudo chown www-data:www-data /var/log/legal24
+sudo mkdir -p /var/log/JurisAI
+sudo chown www-data:www-data /var/log/JurisAI
 ```
 
 ### Nginx Logging
@@ -610,8 +610,8 @@ log_format detailed '$remote_addr - $remote_user [$time_local] '
                    '"$http_referer" "$http_user_agent" '
                    '$request_time $upstream_response_time';
 
-access_log /var/log/nginx/legal24_access.log detailed;
-error_log /var/log/nginx/legal24_error.log;
+access_log /var/log/nginx/JurisAI_access.log detailed;
+error_log /var/log/nginx/JurisAI_error.log;
 ```
 
 ---
@@ -620,23 +620,23 @@ error_log /var/log/nginx/legal24_error.log;
 
 ### Database Backup Script
 
-Create `/usr/local/bin/backup_legal24.sh`:
+Create `/usr/local/bin/backup_JurisAI.sh`:
 
 ```bash
 #!/bin/bash
 
-BACKUP_DIR="/var/backups/legal24"
+BACKUP_DIR="/var/backups/JurisAI"
 DATE=$(date +%Y%m%d_%H%M%S)
-DB_NAME="legal24_prod"
+DB_NAME="JurisAI_prod"
 
 # Create backup directory
 mkdir -p $BACKUP_DIR
 
 # Database backup
-pg_dump -h localhost -U legal24_user $DB_NAME > $BACKUP_DIR/db_backup_$DATE.sql
+pg_dump -h localhost -U JurisAI_user $DB_NAME > $BACKUP_DIR/db_backup_$DATE.sql
 
 # Media files backup
-tar -czf $BACKUP_DIR/media_backup_$DATE.tar.gz /var/www/legal24/backend/media/
+tar -czf $BACKUP_DIR/media_backup_$DATE.tar.gz /var/www/JurisAI/backend/media/
 
 # Remove old backups (keep 7 days)
 find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
@@ -648,9 +648,9 @@ echo "Backup completed: $DATE"
 ### Setup Cron Job
 
 ```bash
-sudo chmod +x /usr/local/bin/backup_legal24.sh
+sudo chmod +x /usr/local/bin/backup_JurisAI.sh
 sudo crontab -e
-# Add: 0 2 * * * /usr/local/bin/backup_legal24.sh
+# Add: 0 2 * * * /usr/local/bin/backup_JurisAI.sh
 ```
 
 ---
@@ -793,7 +793,7 @@ save 60 10000
 ### Emergency Procedures
 
 **Application Down:**
-1. Check logs: `tail -f /var/log/legal24/django-error.log`
+1. Check logs: `tail -f /var/log/JurisAI/django-error.log`
 2. Restart services: `pm2 restart all`
 3. Check database connectivity
 4. Verify Redis connection

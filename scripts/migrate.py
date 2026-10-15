@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Production Database Migration Script for Legal24
+Production Database Migration Script for JurisAI
 
 This script handles database migrations for production deployment
 with proper error handling, logging, and rollback capabilities.
@@ -201,7 +201,7 @@ class MigrationManager:
 
 def main():
     """Main function to handle command line arguments"""
-    parser = argparse.ArgumentParser(description='Legal24 Migration Manager')
+    parser = argparse.ArgumentParser(description='JurisAI Migration Manager')
     parser.add_argument(
         '--action',
         choices=['migrate', 'rollback', 'status'],

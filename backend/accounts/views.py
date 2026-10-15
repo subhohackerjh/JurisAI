@@ -112,7 +112,7 @@ class AdvocateListView(generics.ListAPIView):
         # Filter by availability
         availability = self.request.query_params.get('availability')
         if availability:
-            queryset = queryset.filter(profile__availability=availability)
+            queryset = queryset.filter(profile__availability__iexact=availability)
 
         # Search by name
         search = self.request.query_params.get('search')

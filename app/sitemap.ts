@@ -1,21 +1,22 @@
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   return [
     {
-      url: 'https://legal24.in',
+      url: appUrl,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: 'https://legal24.in/#ecosystem',
+      url: `${appUrl}/#ecosystem`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: 'https://legal24.in/#features',
+      url: `${appUrl}/#features`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
