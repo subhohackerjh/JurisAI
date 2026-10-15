@@ -13,8 +13,8 @@ DEBUG = False
 SECRET_KEY = os.environ['SECRET_KEY']   # fail loudly if missing
 
 ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '').split(',') if h.strip()]
-# Allow the container's local Docker health check.
-ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
+# Allow the container's local Docker health check and Railway's healthcheck probe.
+ALLOWED_HOSTS.extend(['localhost', '127.0.0.1', 'healthcheck.railway.app'])
 
 # Render injects this automatically
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '')
