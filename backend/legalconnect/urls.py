@@ -30,6 +30,7 @@ def readiness_check(request):
 ADMIN_URL = getattr(settings, 'ADMIN_URL', 'admin')
 
 urlpatterns = [
+    path('', health_check, name='root_health_check'),
     path('health/', health_check, name='health_check'),
     path('ready/', readiness_check, name='readiness_check'),
     path(f'{ADMIN_URL}/', admin.site.urls),
